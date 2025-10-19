@@ -10,6 +10,10 @@ STOPPAGE_PER_HALF = (0, 2)
 MAX_ACTIONS_PER_MIN = 2
 BASE_ACTION_P = 0.35
 
+# Udział stałych fragmentów w akcjach ofensywnych
+SET_PIECE_RATE = 0.18     # ~18% akcji to SFG
+CORNER_SHARE = 0.65       # w SFG: 65% rożne, 35% wolne
+
 # --- Synonimy kluczy komentarzy (PL/EN + warianty) ---
 SYNONYMS: Dict[str, List[str]] = {
     "announce": ["announce","akcja","ofensywa","offense","build_up","zapowiedz","atak","atak_zapowiedz"],
@@ -213,7 +217,6 @@ def _pick_attacker(team: TeamCtx, rng: random.Random) -> Player:
     return Player(team.name + " Player", "FWD")
 
 def _pick_assister(team: TeamCtx, shooter: Player, rng: random.Random) -> Optional[Player]:
-    """Wybór asystenta: priorytet MID, potem FWD, potem DEF; nigdy strzelec ani GK."""
     candidates = (
         [p for p in team.players if p.pos == "MID" and p.name != shooter.name] +
         [p for p in team.players if p.pos == "FWD" and p.name != shooter.name] +
@@ -258,7 +261,6 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
     rng = random.Random(seed)
     comments = CommentPack(pack="pl_fun", rng=rng, no_repeat_window=3)
 
-    # składy do użycia przy strzałach/golach
     _ensure_roster(teamA)
     _ensure_roster(teamB)
 
@@ -282,23 +284,48 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
             for _ in range(MAX_ACTIONS_PER_MIN):
                 if rng.random() >= p_action:
                     continue
+
                 # kto atakuje
                 attA = rng.random() < controlA
                 att, deff = (teamA, teamB) if attA else (teamB, teamA)
                 idx = 0 if attA else 1
 
-                # (1) zapowiedź
-                ann = comments.pick("announce", team=att.name, minute=minute)
-                log.append(_fmt(minute, att.name, ann))
+                # Czy to SFG?
+                is_sp = rng.random() < SET_PIECE_RATE
+                sp_kind = None
+                if is_sp:
+                    sp_kind = "corner" if rng.random() < CORNER_SHARE else "freekick"
+                    log.append(_fmt(minute, att.name, "🏳️ Rzut rożny")) if sp_kind == "corner" else log.append(_fmt(minute, att.name, "🎯 Rzut wolny"))
+                else:
+                    ann = comments.pick("announce", team=att.name, minute=minute)
+                    log.append(_fmt(minute, att.name, ann))
 
-                # (2) rezultat
-                if rng.random() < _p_shot(att, deff):
+                # Prawdopodobieństwa dla tej akcji
+                p_sh = _p_shot(att, deff)
+                p_gl = _p_goal(att, deff)
+
+                if sp_kind == "corner":
+                    p_sh *= 1.10   # rożny częściej kończy się strzałem
+                    p_gl *= 1.05   # i minimalnie większa groźność uderzenia
+                elif sp_kind == "freekick":
+                    # 50% dośrodkowanie, 50% bezpośredni strzał
+                    if rng.random() < 0.5:   # dośrodkowanie
+                        p_sh *= 0.95
+                        p_gl *= 0.95
+                    else:                    # bezpośredni strzał
+                        p_sh *= 0.85
+                        p_gl *= 1.10
+
+                p_sh = max(0.15, min(0.90, p_sh))
+                p_gl = max(0.03, min(0.40, p_gl))
+
+                # Rezultat
+                if rng.random() < p_sh:
                     shots[idx] += 1
                     shooter = _pick_attacker(att, rng)
-                    if rng.random() < _p_goal(att, deff):
+                    if rng.random() < p_gl:
                         score[idx] += 1
                         on_target[idx] += 1
-                        # asysta z prawd. 70%
                         assister_txt = ""
                         if rng.random() < 0.70:
                             assister = _pick_assister(att, shooter, rng)
@@ -307,23 +334,31 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                             else:
                                 assister_txt = "; bez asysty"
                         gtxt = comments.pick("goal", team=att.name, minute=minute, scoreA=score[0], scoreB=score[1])
-                        log.append(f"{minute} ⚽ GOL! [{att.name}] {score[0]}:{score[1]} — {gtxt}  (strzelec: {shooter.name}{assister_txt})")
+                        tag = "po rzucie rożnym" if sp_kind == "corner" else ("po rzucie wolnym" if sp_kind == "freekick" else "z akcji")
+                        log.append(f"{minute} ⚽ GOL! [{att.name}] {score[0]}:{score[1]} — {gtxt}  (strzelec: {shooter.name}{assister_txt}, {tag})")
                     else:
                         if rng.random() < 0.6:
                             on_target[idx] += 1
                             rtxt = comments.pick("shot_saved", team=att.name, minute=minute)
                         else:
                             rtxt = comments.pick("shot_off", team=att.name, minute=minute)
-                        log.append(_fmt(minute, att.name, f"{rtxt} (uderza {shooter.name})"))
+                        extra = " po SFG" if sp_kind else ""
+                        log.append(_fmt(minute, att.name, f"{rtxt}{extra} (uderza {shooter.name})"))
                 else:
-                    which = rng.random()
-                    if which < 0.4:
-                        rtxt = comments.pick("throw_in", team=att.name, minute=minute)
-                    elif which < 0.8:
-                        rtxt = comments.pick("clearance", team=att.name, minute=minute)
-                    else:
+                    if sp_kind == "corner":
                         rtxt = comments.pick("corner_wasted", team=att.name, minute=minute)
-                    log.append(_fmt(minute, att.name, rtxt))
+                        log.append(_fmt(minute, att.name, rtxt))
+                    elif sp_kind == "freekick":
+                        log.append(_fmt(minute, att.name, "wolny niewykorzystany"))
+                    else:
+                        which = rng.random()
+                        if which < 0.4:
+                            rtxt = comments.pick("throw_in", team=att.name, minute=minute)
+                        elif which < 0.8:
+                            rtxt = comments.pick("clearance", team=att.name, minute=minute)
+                        else:
+                            rtxt = comments.pick("corner_wasted", team=att.name, minute=minute)
+                        log.append(_fmt(minute, att.name, rtxt))
         return add
 
     add1 = sim_half(first_half=True)
