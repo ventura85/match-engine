@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+
+# Virtual env
+.venv/
+venv/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Replit artefacts
+.replit
+.local/
+replit.md
+
+# Other
+*.log

@@ -1,0 +1,306 @@
+{
+  "teams": [
+    {
+      "name": "Red Lions",
+      "formation": "4-3-3",
+      "style": "attacking",
+      "attack_channel": "wings",
+      "players": [
+        {
+          "id": 1,
+          "name": "Jan Kowalski",
+          "position": "GK",
+          "attributes": {
+            "physical": {"speed": 55, "strength": 70, "stamina": 75},
+            "technical": {"reflexes": 85, "handling": 82, "kicking": 68},
+            "mental": {"positioning": 84, "concentration": 86, "decisions": 78}
+          },
+          "energy": 0.95,
+          "form": 0.88,
+          "traits": ["Calm", "Leader"]
+        },
+        {
+          "id": 2,
+          "name": "Piotr Nowak",
+          "position": "DEF",
+          "attributes": {
+            "physical": {"speed": 72, "strength": 78, "stamina": 80},
+            "technical": {"tackling": 82, "marking": 85, "passing": 70},
+            "mental": {"positioning": 83, "concentration": 81, "decisions": 76}
+          },
+          "energy": 0.92,
+          "form": 0.91,
+          "traits": ["Aggressive", "Loyal"]
+        },
+        {
+          "id": 3,
+          "name": "Marek Wiśniewski",
+          "position": "DEF",
+          "attributes": {
+            "physical": {"speed": 75, "strength": 76, "stamina": 82},
+            "technical": {"tackling": 80, "marking": 82, "passing": 74},
+            "mental": {"positioning": 80, "concentration": 79, "decisions": 75}
+          },
+          "energy": 0.90,
+          "form": 0.85,
+          "traits": ["Professional", "Ambitious"]
+        },
+        {
+          "id": 4,
+          "name": "Tomasz Kamiński",
+          "position": "DEF",
+          "attributes": {
+            "physical": {"speed": 70, "strength": 80, "stamina": 78},
+            "technical": {"tackling": 79, "marking": 81, "passing": 68},
+            "mental": {"positioning": 77, "concentration": 80, "decisions": 74}
+          },
+          "energy": 0.93,
+          "form": 0.89,
+          "traits": ["Strong", "Determined"]
+        },
+        {
+          "id": 5,
+          "name": "Krzysztof Lewandowski",
+          "position": "DEF",
+          "attributes": {
+            "physical": {"speed": 74, "strength": 74, "stamina": 81},
+            "technical": {"tackling": 78, "marking": 79, "passing": 72},
+            "mental": {"positioning": 78, "concentration": 76, "decisions": 73}
+          },
+          "energy": 0.91,
+          "form": 0.87,
+          "traits": ["Fast", "Versatile"]
+        },
+        {
+          "id": 6,
+          "name": "Adam Woźniak",
+          "position": "MID",
+          "attributes": {
+            "physical": {"speed": 76, "strength": 68, "stamina": 85},
+            "technical": {"passing": 84, "dribbling": 78, "shooting": 72},
+            "mental": {"positioning": 80, "concentration": 82, "decisions": 79}
+          },
+          "energy": 0.94,
+          "form": 0.92,
+          "traits": ["Creative", "Ambitious"]
+        },
+        {
+          "id": 7,
+          "name": "Michał Dąbrowski",
+          "position": "MID",
+          "attributes": {
+            "physical": {"speed": 78, "strength": 70, "stamina": 83},
+            "technical": {"passing": 80, "dribbling": 82, "shooting": 75},
+            "mental": {"positioning": 78, "concentration": 77, "decisions": 76}
+          },
+          "energy": 0.92,
+          "form": 0.90,
+          "traits": ["Fast", "Skillful"]
+        },
+        {
+          "id": 8,
+          "name": "Paweł Kozłowski",
+          "position": "MID",
+          "attributes": {
+            "physical": {"speed": 74, "strength": 72, "stamina": 86},
+            "technical": {"passing": 82, "dribbling": 76, "shooting": 70},
+            "mental": {"positioning": 79, "concentration": 80, "decisions": 78}
+          },
+          "energy": 0.93,
+          "form": 0.88,
+          "traits": ["Hardworking", "Professional"]
+        },
+        {
+          "id": 9,
+          "name": "Robert Mazur",
+          "position": "FWD",
+          "attributes": {
+            "physical": {"speed": 85, "strength": 74, "stamina": 80},
+            "technical": {"shooting": 88, "dribbling": 84, "positioning": 86},
+            "mental": {"positioning": 85, "concentration": 82, "decisions": 80}
+          },
+          "energy": 0.95,
+          "form": 0.94,
+          "traits": ["Lethal", "Ambitious", "Fast"]
+        },
+        {
+          "id": 10,
+          "name": "Łukasz Jankowski",
+          "position": "FWD",
+          "attributes": {
+            "physical": {"speed": 82, "strength": 70, "stamina": 78},
+            "technical": {"shooting": 84, "dribbling": 86, "positioning": 83},
+            "mental": {"positioning": 82, "concentration": 79, "decisions": 78}
+          },
+          "energy": 0.92,
+          "form": 0.91,
+          "traits": ["Skillful", "Creative"]
+        },
+        {
+          "id": 11,
+          "name": "Wojciech Szymański",
+          "position": "FWD",
+          "attributes": {
+            "physical": {"speed": 83, "strength": 72, "stamina": 79},
+            "technical": {"shooting": 85, "dribbling": 82, "positioning": 84},
+            "mental": {"positioning": 83, "concentration": 80, "decisions": 79}
+          },
+          "energy": 0.93,
+          "form": 0.89,
+          "traits": ["Fast", "Clinical"]
+        }
+      ]
+    },
+    {
+      "name": "Blue Hawks",
+      "formation": "4-4-2",
+      "style": "balanced",
+      "attack_channel": "center",
+      "players": [
+        {
+          "id": 12,
+          "name": "Andrzej Zieliński",
+          "position": "GK",
+          "attributes": {
+            "physical": {"speed": 52, "strength": 68, "stamina": 73},
+            "technical": {"reflexes": 83, "handling": 80, "kicking": 70},
+            "mental": {"positioning": 82, "concentration": 84, "decisions": 76}
+          },
+          "energy": 0.94,
+          "form": 0.86,
+          "traits": ["Reliable", "Calm"]
+        },
+        {
+          "id": 13,
+          "name": "Jacek Wojciechowski",
+          "position": "DEF",
+          "attributes": {
+            "physical": {"speed": 71, "strength": 79, "stamina": 79},
+            "technical": {"tackling": 81, "marking": 83, "passing": 69},
+            "mental": {"positioning": 81, "concentration": 80, "decisions": 75}
+          },
+          "energy": 0.91,
+          "form": 0.88,
+          "traits": ["Strong", "Leader"]
+        },
+        {
+          "id": 14,
+          "name": "Rafał Krawczyk",
+          "position": "DEF",
+          "attributes": {
+            "physical": {"speed": 73, "strength": 75, "stamina": 81},
+            "technical": {"tackling": 79, "marking": 80, "passing": 73},
+            "mental": {"positioning": 79, "concentration": 78, "decisions": 74}
+          },
+          "energy": 0.89,
+          "form": 0.84,
+          "traits": ["Professional", "Focused"]
+        },
+        {
+          "id": 15,
+          "name": "Marcin Kucharski",
+          "position": "DEF",
+          "attributes": {
+            "physical": {"speed": 69, "strength": 81, "stamina": 77},
+            "technical": {"tackling": 80, "marking": 82, "passing": 67},
+            "mental": {"positioning": 76, "concentration": 79, "decisions": 73}
+          },
+          "energy": 0.92,
+          "form": 0.87,
+          "traits": ["Aggressive", "Tough"]
+        },
+        {
+          "id": 16,
+          "name": "Grzegorz Pawlak",
+          "position": "DEF",
+          "attributes": {
+            "physical": {"speed": 72, "strength": 73, "stamina": 80},
+            "technical": {"tackling": 77, "marking": 78, "passing": 71},
+            "mental": {"positioning": 77, "concentration": 75, "decisions": 72}
+          },
+          "energy": 0.90,
+          "form": 0.85,
+          "traits": ["Versatile", "Reliable"]
+        },
+        {
+          "id": 17,
+          "name": "Sebastian Adamczyk",
+          "position": "MID",
+          "attributes": {
+            "physical": {"speed": 75, "strength": 69, "stamina": 84},
+            "technical": {"passing": 82, "dribbling": 77, "shooting": 71},
+            "mental": {"positioning": 79, "concentration": 81, "decisions": 78}
+          },
+          "energy": 0.93,
+          "form": 0.90,
+          "traits": ["Hardworking", "Determined"]
+        },
+        {
+          "id": 18,
+          "name": "Bartosz Sikora",
+          "position": "MID",
+          "attributes": {
+            "physical": {"speed": 77, "strength": 71, "stamina": 82},
+            "technical": {"passing": 81, "dribbling": 80, "shooting": 74},
+            "mental": {"positioning": 77, "concentration": 76, "decisions": 75}
+          },
+          "energy": 0.91,
+          "form": 0.89,
+          "traits": ["Creative", "Skillful"]
+        },
+        {
+          "id": 19,
+          "name": "Damian Michalski",
+          "position": "MID",
+          "attributes": {
+            "physical": {"speed": 73, "strength": 73, "stamina": 85},
+            "technical": {"passing": 80, "dribbling": 75, "shooting": 69},
+            "mental": {"positioning": 78, "concentration": 79, "decisions": 77}
+          },
+          "energy": 0.92,
+          "form": 0.87,
+          "traits": ["Professional", "Loyal"]
+        },
+        {
+          "id": 20,
+          "name": "Mateusz Rutkowski",
+          "position": "MID",
+          "attributes": {
+            "physical": {"speed": 76, "strength": 70, "stamina": 83},
+            "technical": {"passing": 79, "dribbling": 78, "shooting": 73},
+            "mental": {"positioning": 76, "concentration": 77, "decisions": 76}
+          },
+          "energy": 0.90,
+          "form": 0.86,
+          "traits": ["Versatile", "Ambitious"]
+        },
+        {
+          "id": 21,
+          "name": "Kamil Borkowski",
+          "position": "FWD",
+          "attributes": {
+            "physical": {"speed": 84, "strength": 73, "stamina": 79},
+            "technical": {"shooting": 86, "dribbling": 83, "positioning": 85},
+            "mental": {"positioning": 84, "concentration": 81, "decisions": 79}
+          },
+          "energy": 0.94,
+          "form": 0.92,
+          "traits": ["Clinical", "Fast", "Ambitious"]
+        },
+        {
+          "id": 22,
+          "name": "Filip Ostrowski",
+          "position": "FWD",
+          "attributes": {
+            "physical": {"speed": 81, "strength": 75, "stamina": 77},
+            "technical": {"shooting": 83, "dribbling": 80, "positioning": 82},
+            "mental": {"positioning": 81, "concentration": 78, "decisions": 77}
+          },
+          "energy": 0.91,
+          "form": 0.88,
+          "traits": ["Strong", "Determined"]
+        }
+      ]
+    }
+  ]
+}
