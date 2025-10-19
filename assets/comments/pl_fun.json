@@ -1,0 +1,117 @@
+{
+    "corner_parried": [
+      "Golkiper paruje bombę na róg!",
+      "Instynktowna ręka – tylko korner.",
+      "Refleks kota! Paruje za linię końcową.",
+      "Parada na zdjęcia – będzie róg!"
+    ],
+    "corner_blocked": [
+      "Rykoszet i poza linią – rzut rożny!",
+      "Mur staje jak beton – piłka na róg.",
+      "Ofiarny blok, to musi być korner.",
+      "Zatrzymane na ostatniej chwili – róg!"
+    ],
+    "shot_on_target": [
+      "Mocny strzał po ziemi – bramkarz z klasą!",
+      "Celnie pod poprzeczkę – golkiper z trudem odbija.",
+      "Ślizgający w długi róg – świetna interwencja!",
+      "Kąśliwe uderzenie – wyciągnięte jak z kapelusza!"
+    ],
+    "shot_off_target": [
+      "Minimalnie obok dalszego słupka.",
+      "Piłka przelatuje nad poprzeczką.",
+      "To powinno siedzieć – ale obok!",
+      "Uderzenie 'na pamięć' – daleko od bramki."
+    ],
+    "freekick": [
+      "Rzut wolny – szansa na groźną wrzutkę.",
+      "Ustawiają mur, będzie dośrodkowanie.",
+      "Wolny z dystansu – mogą strzelać bezpośrednio.",
+      "Wolny ze skraju pola karnego – pachnie okazją."
+    ],
+    "penalty_miss": [
+      "Bramkarz wyczuł intencje!",
+      "Słupek! Niewiarygodne pudło z wapna.",
+      "Lekki strzał – golkiper łapie bez kłopotu.",
+      "Ponad bramką! Jedenastka zmarnowana."
+    ],
+    "penalty_goal": [
+      "Jedenastka! Pewnie przy słupku.",
+      "Krótki rozbieg i chłodna głowa – gol!",
+      "W przeciwny róg bramkarza – bez szans.",
+      "Rakietą w okienko – karny bezdyskusyjny."
+    ],
+    "freekick_goal": [
+      "Nad murem i do siatki – majstersztyk!",
+      "Lewitująca po koźle – nie do obrony.",
+      "Kręcona w okno! Stadion na nogach.",
+      "Mierzone pod poprzeczkę – genialne wykonanie."
+    ],
+    "build_up_short": [
+      "Krótka klepka, cierpliwe budowanie.",
+      "Zagranie na ścianę i ruch bez piłki.",
+      "Gra na małej przestrzeni – szukają trójkąta.",
+      "Dwa kontakty, tempo rośnie."
+    ],
+    "build_up_medium": [
+      "Zmienna wysokość ataku, wachlowanie piłką – czekają na lukę.",
+      "Odwrócenie strony i wjazd półprzestrzenią.",
+      "Rytm rośnie, przeciwnik tylko przesuwa blok.",
+      "Cierpliwie w ataku pozycyjnym – kontrolują sytuację."
+    ],
+    "duel_context": [
+      "Minięty wślizg i korytarz do strzału!",
+      "Zwód do środka, obrońca spóźniony o metr.",
+      "Przepchnięty bark w bark – strzał z marszu.",
+      "Rolka i zejście na lewą – jest pozycja."
+    ],
+    "duel_shot_saved": [
+      "Strzał z bliska – kapitalna parada!",
+      "Krótkim rogiem, ale bramkarz czujny.",
+      "Wystawia nogę w ostatniej chwili – broni!",
+      "Piekielnie mocno, jednak zatrzymane!"
+    ],
+    "micro_pass_chain": [
+      "Trójkąt podań w bocznym sektorze.",
+      "Nawroty i wymiana na jeden kontakt.",
+      "Kapitalna asekuracja i utrzymanie piłki.",
+      "Szybka klepka, przeciwnik goni cień."
+    ],
+    "micro_press": [
+      "Wysoki pressing, wymuszone zagranie do tyłu.",
+      "Podwajają przy linii – oddechu brak.",
+      "Zamyka wyjście, zostaje wykop.",
+      "Doskok w tempo – przeciwnik wybija na pałę."
+    ],
+    "micro_throw_in": [
+      "Aut na wysokości pola karnego – szybko wznawiają.",
+      "Daleki wrzut z autu, zamieszanie!",
+      "Krótko z autu i znowu rytm.",
+      "Wrzut z autu do środkowej strefy – utrzymują."
+    ],
+    "micro_goal_kick": [
+      "Wznowienie od bramki, rozgrywają na krótko.",
+      "Długi wykop – walka o drugą piłkę.",
+      "Rozpoczynają spokojnie od obrońców.",
+      "Krótko do boku i powolne budowanie."
+    ],
+    "micro_clearance": [
+      "Wybicie „gdziekolwiek”, ale oddalają zagrożenie.",
+      "Czyściutko głową – zagrożenie zażegnane.",
+      "Na oślep byle dalej – i jest oddech.",
+      "Mocnym wybiciem resetują akcję."
+    ],
+    "yellow": [
+      "🟨 Twardo i spóźniony – żółta kartka.",
+      "🟨 Taktyczny faul i kartonik.",
+      "🟨 Gwizdek i kartka bez dyskusji.",
+      "🟨 Zbyt ostry wślizg – notatka sędziego."
+    ],
+    "red_card": [
+      "🟥 Brutalny wślizg – wylot!",
+      "🟥 Druga żółta i w konsekwencji czerwona.",
+      "🟥 Agresja poza przepisami – nie ma litości.",
+      "🟥 Faul ratunkowy jako ostatni – do szatni."
+    ]
+  }
+  

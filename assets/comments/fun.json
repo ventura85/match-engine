@@ -1,0 +1,182 @@
+{
+    "build_up": {
+      "short": [
+        "{att} klepie w środku – cierpliwe granie.",
+        "{att} uspokaja, {defe} cofnięci.",
+        "Zmiana strony gry przez {att}.",
+        "{att} kołysze blok {defe}.",
+        "{att} przyspiesza, ale {defe} zdążyli wrócić.",
+        "{att} trzyma piłkę, szukają luki.",
+        "{att} próbuje skrzydłem – jeszcze bez efektu.",
+        "{att} w półprzestrzeni, {defe} domyka środek.",
+        "{att} wyczekuje momentu na ostatnie podanie.",
+        "{att} zwalnia, budując atak pozycyjny."
+      ],
+      "medium": [
+        "{att} buduje atak jak z instrukcji IKEA – krok po kroku.",
+        "{att} mieli w środku jak młynek do kawy, {defe} patrzą i czekają.",
+        "Pachnie akcją – {att} zawęża i przyspiesza pod polem karnym.",
+        "Piłka chodzi jak po sznurku – {att} zmienia tempo.",
+        "{att} cierpliwie, na małej przestrzeni – {defe} w gęstym bloku.",
+        "{att} zygzakiem przerzuca grę, {defe} tylko przesuwa.",
+        "{att} zamyka {defe} na ich połowie, rośnie ciśnienie.",
+        "Coraz bliżej bramki – {att} wycina linie podań {defe}.",
+        "{att} – dwa, trzy kontakty, wachlowanie, szukanie wolnego.",
+        "Na zegarze nerwówka, ale {att} gra w cierpliwość."
+      ]
+    },
+    "micro": {
+      "pass_chain": [
+        "Dwójkowa akcja, tiki-taka {att}.",
+        "Krótka klepka {att} na jeden kontakt.",
+        "Trójkąt podań {att} w bocznym sektorze.",
+        "Ściana i od razu wyjście – {att}.",
+        "Klin podań {att}, {defe} tylko przesuwa.",
+        "Szybkie dwie piłki i obrót – {att}.",
+        "Miękkie podanie za linię – {att} utrzymuje.",
+        "Przyspieszenie rytmu, dwa kontakty – {att}.",
+        "Zagranie na ścianę, {att} w tempo.",
+        "Wymiana podań w ciasnocie – {att} nie traci głowy."
+      ],
+      "press": [
+        "{defe} rusza pressingiem – {att} wybija się spod presji.",
+        "Nacisk {defe}! {att} uspokaja do tyłu.",
+        "Pressing na gwizdek – {att} na jeden kontakt ratuje sytuację.",
+        "Wysokie podejście {defe}, {att} sprytnie przerzuca.",
+        "{defe} doskakuje, {att} odgrywa na wolny sektor."
+      ],
+      "clearance": [
+        "Wybicie 'gdziekolwiek' – {defe} łapie oddech.",
+        "Twarde wyjaśnienie – piłka daleko od bramki {defe}.",
+        "Głową zażegnane niebezpieczeństwo – {defe} czyści pole karne."
+      ],
+      "throw_in": [
+        "Aut dla {att}, krótko wznawiają.",
+        "Wrzucony aut na wysokości pola karnego – {att} utrzymuje.",
+        "Szybkie wznowienie z autu – {att} nie zwalnia."
+      ],
+      "offside": [
+        "Spalony! {att} uciekł pół kroku za wcześnie.",
+        "Chytry start {att}, ale chorągiewka w górze – spalony.",
+        "Linia {defe} wyjechała perfekcyjnie – {att} złapany na spalonym."
+      ],
+      "goal_kick": [
+        "Wznowienie od bramki {defe}.",
+        "Golkiper {defe} na krótko wznawia – budują od tyłu.",
+        "Długi wykop bramkarza {defe} – walka o drugą piłkę."
+      ]
+    },
+    "shot": {
+      "on": [
+        "{pl} huknął jak z armaty! Bramkarz wyciąga to jak z kapelusza!",
+        "{pl} z woleja! Rakieta – i antyrakieta golkipera.",
+        "{pl} celnie po ziemi – świetna parada!",
+        "{pl} sprytnie w długi róg – obronione!",
+        "{pl} szukał okna – bramkarz na raty chwyta!",
+        "{pl} od razu! Bramkarz mówi: nie tym razem.",
+        "{pl} wbija gwoździa – golkiper wyjmuje kombinerki!",
+        "{pl} potężnie! Piąstkowana do boku.",
+        "{pl} z pierwszej! Palce bramkarza ratują {defe}.",
+        "{pl} mierzy i... golkiper to czyta jak poranną gazetę."
+      ],
+      "off": [
+        "{pl} celował w okienko, wyszło w okno.",
+        "{pl} kręcił bananem – zabrakło centymetrów.",
+        "{pl} kropnął bez namysłu – wysoko nad.",
+        "{pl} z ostrego kąta – boczna siatka.",
+        "{pl} technicznie... ale brakło precyzji.",
+        "{pl} próbował zewnętrzną – odrobinę obok.",
+        "{pl} piłka ucieka po nierówności – niecelnie.",
+        "{pl} z fałszywego biegu – minimalnie obok.",
+        "{pl} 'na pamięć' – to nie mogło wpaść.",
+        "{pl} po rykoszecie – i właśnie to zmyliło... trybuny."
+      ]
+    },
+    "corner": {
+      "blocked": [
+        "{pl} przyjęty murem jak paczka w paczkomacie – róg!",
+        "Ofiarny blok – {att} ma kolejny róg!",
+        "Strzał {pl} zablokowany w ostatniej chwili – rzut rożny!",
+        "Kaskadowa obrona {defe} – i piłka za końcową.",
+        "Zasłona w polu karnym, zablokowane – róg dla {att}.",
+        "{pl} z półwoleja, ofiarnie blokowane – korner.",
+        "Wpychają do szesnastki – kończy się na rogu.",
+        "Kapitalny blok, piłka odbita – róg!",
+        "Z korków na korner – {att} dociśnie.",
+        "Kąt zamknięty, {pl} tylko o róg."
+      ],
+      "saved": [
+        "Golkiper wypycha bombę od {pl} – rzut rożny!",
+        "Parada na refleks – {att} ma róg!",
+        "Bramkarz z trudem wybija uderzenie {pl} za linię.",
+        "Instynktowna obrona – korner dla {att}.",
+        "Wyciągnięte z sieci! Jeszcze róg dla {att}.",
+        "Końcówki palców ratują {defe} – rzut rożny.",
+        "Kapitalny refleks bramkarza – korner!",
+        "{pl} głową! Zbite na róg!",
+        "Tor lotu zmieniony o centymetry – rożny.",
+        "Golkiper na posterunku – piłka za końcową."
+      ]
+    },
+    "freekick": {
+      "text": [
+        "Wolny dla {att} – ustawiają się w szesnastce.",
+        "Rzut wolny {att}. Czy będzie dośrodkowanie?",
+        "{att} ma stały fragment. Napięcie rośnie.",
+        "Sprytna rozpiska SFG {att} – zobaczymy efekt.",
+        "Daleki wolny – raczej wrzutka {att}."
+      ],
+      "goal": [
+        "Bezpośrednio z wolnego! {sc}! Maluje po okienku!",
+        "Sztycha z wolnego – {sc} i jest bramka!",
+        "{sc} nad murem jak na autopilocie – gol!"
+      ]
+    },
+    "penalty": {
+      "goal": [
+        "Jedenastka! {sc} z zimną krwią – gol!",
+        "{sc} myli golkipera i pakuje do siatki!",
+        "{sc} pewnie w róg – bez szans dla bramkarza!"
+      ],
+      "miss": [
+        "Z wapna w kosmos – {att} łapie się za głowę!",
+        "Poprzeczka! Jedenastka niewykorzystana!",
+        "Bramkarz broni karnego! Wybucha stadion!"
+      ]
+    },
+    "duel": {
+      "win_context": [
+        "({apl} zatańczył z {dpl} jak z pachołkiem – i huknął).",
+        "({apl} kiwnął {dpl} i znalazł kąt).",
+        "({apl} przepchnął {dpl} w polu karnym – przewaga siły)."
+      ],
+      "saved": [
+        "{apl} po minięciu! Strzał! Bramkarz to czyta!",
+        "{apl} urwał się i huknął – golkiper odbija!",
+        "{apl} złożył się do uderzenia, ale to broni bramkarz!"
+      ]
+    },
+    "cards": {
+      "yellow": [
+        "🟨 Żółta kartka dla {pl}.",
+        "🟨 Twardo – {pl} w notesie sędziego.",
+        "🟨 Bezdyskusyjna żółta dla {pl}."
+      ],
+      "red": [
+        "🟥 {pl} do prysznica – szybciej niż reszta.",
+        "🟥 Ostre wejście – {pl} wylatuje.",
+        "🟥 Czerwona! {pl} zostawia kolegów."
+      ]
+    },
+    "time": {
+      "stoppage": [
+        "➕ Doliczony czas gry: +{mins}'",
+        "➕ Gramy jeszcze {mins}'"
+      ],
+      "final": [
+        "🔚 Ostatni gwizdek sędziego.",
+        "🔚 Koniec spotkania!"
+      ]
+    }
+  }
+  
