@@ -3,46 +3,46 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional, Tuple
 import random, math, json, re, unicodedata
 from pathlib import Path
-from engine.duel import DuelSystem  # LIVE DUEL
+from engine.duel import DuelSystem
+from engine.config import CFG  # <-- KONFIG Z PLIKU
 
-# --- Parametry MVP ---
-HALF_VMINUTES = 7
-STOPPAGE_PER_HALF = (0, 2)
-MAX_ACTIONS_PER_MIN = 2
-BASE_ACTION_P = 0.35
+# --- Parametry z configu ---
+HALF_VMINUTES       = CFG.MATCH.HALF_VMINUTES
+STOPPAGE_PER_HALF   = CFG.MATCH.STOPPAGE_PER_HALF
+MAX_ACTIONS_PER_MIN = CFG.MATCH.MAX_ACTIONS_PER_MIN
+BASE_ACTION_P       = CFG.MATCH.BASE_ACTION_P
 
-# Stałe fragmenty gry (SFG)
-SET_PIECE_RATE = 0.18
-CORNER_SHARE   = 0.65
+SET_PIECE_RATE      = CFG.SET.RATE
+CORNER_SHARE        = CFG.SET.CORNER_SHARE
 
-# Faule / kartki
-FOUL_RATE           = 0.12
-FOUL_DEFENDERS_BIAS = 0.85
-YELLOW_PROB         = 0.25
-RED_PROB            = 0.02
-RED_MOD             = 0.90
+FOUL_RATE           = CFG.FOULS.RATE
+FOUL_DEFENDERS_BIAS = CFG.FOULS.DEFENDERS_BIAS
+YELLOW_PROB         = CFG.FOULS.YELLOW_PROB
+RED_PROB            = CFG.FOULS.RED_PROB
+RED_MOD             = CFG.FOULS.RED_MOD
 
-# Live narracja (kosmetyka)
-LIVE_RATE = 0.12
+LIVE_RATE           = CFG.LIVE.RATE
+LIVE_DUEL_MIN       = CFG.DUEL.MIN
+LIVE_DUEL_MAX       = CFG.DUEL.MAX
+LIVE_DUEL_RATE0     = CFG.DUEL.RATE  # bazowe
 
-# Live Action Duel
-LIVE_DUEL_MIN = 2
-LIVE_DUEL_MAX = 4
-LIVE_DUEL_RATE = 0.08  # per-akcja, do wyczerpania puli
+# --- Zaangażowanie ---
+ENG_ON                = CFG.ENG.ON
+ENG_LEAD_RELAX_EARLY  = CFG.ENG.LEAD_RELAX_EARLY
+ENG_LEAD_RELAX_LATE   = CFG.ENG.LEAD_RELAX_LATE
+ENG_TRAIL_PUSH_EARLY  = CFG.ENG.TRAIL_PUSH_EARLY
+ENG_TRAIL_PUSH_LATE   = CFG.ENG.TRAIL_PUSH_LATE
+ENG_RELAX_2PLUS_BONUS = CFG.ENG.RELAX_2PLUS_BONUS
+ENG_PUSH_2PLUS_BONUS  = CFG.ENG.PUSH_2PLUS_BONUS
 
-# --- Zaangażowanie (confidence/determination) ---
-ENG_LEAD_RELAX_EARLY = 0.97   # prowadzący do 60'
-ENG_LEAD_RELAX_LATE  = 0.94   # prowadzący po 60'
-ENG_TRAIL_PUSH_EARLY = 1.03   # przegrywający do 60'
-ENG_TRAIL_PUSH_LATE  = 1.08   # przegrywający po 60'
-ENG_RELAX_2PLUS_BONUS = 0.98  # ekstra relaks przy +2
-ENG_PUSH_2PLUS_BONUS  = 1.03  # ekstra determinacja przy -2
+# Anti-zero
+ANTI_ZERO_MINUTE    = CFG.AZ.MINUTE
+ANTI_ZERO_BOOST     = CFG.AZ.BOOST
 
-# Anti-zero strzałów
-ANTI_ZERO_MINUTE = 70
-ANTI_ZERO_BOOST  = 1.15
+# --- Komentarze ---
+CMT_PACK = CFG.CMT.PACK
 
-# --- Synonimy komentarzy (dopasowanie do assets/comments/*.json, fallbacki) ---
+# --- Synonimy komentarzy + fallbacki ---
 SYNONYMS: Dict[str, List[str]] = {
     "announce": ["announce","akcja","ofensywa","offense","build_up","zapowiedz","atak","atak_zapowiedz"],
     "goal": ["goal","gol","bramka","trafienie","brameczka","jedenastka gol"],
@@ -52,7 +52,6 @@ SYNONYMS: Dict[str, List[str]] = {
     "throw_in": ["throw_in","aut","wrzut_aut","wrzut z autu","wrzut"],
     "corner_wasted": ["corner_wasted","corner_lost","rog_niewykorzystany","róg niewykorzystany","zmarnowany róg"],
 }
-
 DEFAULTS = {
     "announce": ["{team} w ofensywie…"],
     "goal": ["GOL dla {team}!"],
@@ -70,9 +69,8 @@ def _norm(s: str) -> str:
     s = re.sub(r"[^a-z0-9]+", " ", s).strip()
     return s
 
-# === Paczka komentarzy ===
 class CommentPack:
-    def __init__(self, pack: str = "pl_fun", rng: Optional[random.Random] = None, no_repeat_window: int = 3):
+    def __init__(self, pack: str = CMT_PACK, rng: Optional[random.Random] = None, no_repeat_window: int = 3):
         self.pack = pack
         self.rng = rng or random.Random()
         self.no_repeat_window = no_repeat_window
@@ -80,17 +78,10 @@ class CommentPack:
         self._recent: Dict[str, List[str]] = {}
         self._resolved: Dict[str, Optional[str]] = {}
         self._load()
-
-    def _repo_root(self) -> Path:
-        return Path(__file__).resolve().parents[1]
-
+    def _repo_root(self) -> Path: return Path(__file__).resolve().parents[1]
     def _candidates(self) -> List[Path]:
         base = self._repo_root() / "assets" / "comments"
-        return [
-            base / f"{self.pack}.json",
-            Path.cwd() / "assets" / "comments" / f"{self.pack}.json",
-        ]
-
+        return [base / f"{self.pack}.json", Path.cwd() / "assets" / "comments" / f"{self.pack}.json"]
     def _load(self) -> None:
         for p in self._candidates():
             if p.is_file():
@@ -98,26 +89,19 @@ class CommentPack:
                 for k, vals in list(d.items()):
                     uniq, seen = [], set()
                     for v in vals:
-                        t = (v or "").strip()
-                        key = t.lower()
-                        if t and key not in seen:
-                            seen.add(key); uniq.append(t)
+                        t = (v or "").strip(); key = t.lower()
+                        if t and key not in seen: seen.add(key); uniq.append(t)
                     d[k] = uniq
-                self._data = d
-                break
+                self._data = d; break
         self._keys_raw = list(self._data.keys())
         self._keys_norm = {_norm(k): k for k in self._keys_raw}
         for kind in SYNONYMS.keys():
             self._resolved[kind] = self._resolve_key(kind)
-
     def _resolve_key(self, kind: str) -> Optional[str]:
-        if not self._keys_raw:
-            return None
-        norm_keys = list(self._keys_norm.keys())
+        if not self._keys_raw: return None
         for syn in SYNONYMS[kind]:
             ns = _norm(syn)
-            if ns in self._keys_norm:
-                return self._keys_norm[ns]
+            if ns in self._keys_norm: return self._keys_norm[ns]
         for syn in SYNONYMS[kind]:
             ns = _norm(syn); tokens = set(ns.split())
             for nk, orig in self._keys_norm.items():
@@ -125,25 +109,17 @@ class CommentPack:
                 if tokens & set(nk.split()): return orig
         import difflib as _dif
         for syn in SYNONYMS[kind]:
-            ns = _norm(syn)
-            best = _dif.get_close_matches(ns, list(self._keys_norm.keys()), n=1, cutoff=0.64)
-            if best:
-                return self._keys_norm[best[0]]
+            ns = _norm(syn); best = _dif.get_close_matches(ns, list(self._keys_norm.keys()), n=1, cutoff=0.64)
+            if best: return self._keys_norm[best[0]]
         return None
-
     def _pick_from_key(self, key: str, **vars) -> Optional[str]:
         vals = self._data.get(key) or []
-        if not vals:
-            return None
+        if not vals: return None
         recent = self._recent.setdefault(key, [])
         pool = [v for v in vals if v not in recent[-self.no_repeat_window:]] or vals
-        txt = self.rng.choice(pool)
-        recent.append(txt)
-        try:
-            return txt.format(**vars)
-        except Exception:
-            return txt
-
+        txt = self.rng.choice(pool); recent.append(txt)
+        try: return txt.format(**vars)
+        except Exception: return txt
     def pick(self, kind: str, **vars) -> str:
         key = self._resolved.get(kind)
         if key:
@@ -151,24 +127,15 @@ class CommentPack:
             if t: return t
         return self.rng.choice(DEFAULTS[kind]).format(**vars)
 
-# === Live pack (opcjonalny plik assets/live_actions.json) ===
 class LivePack:
     def __init__(self, rng: Optional[random.Random] = None, no_repeat_window: int = 5):
         self.rng = rng or random.Random()
         self.no_repeat_window = no_repeat_window
-        self._msgs: List[str] = []
-        self._recent: List[str] = []
+        self._msgs: List[str] = []; self._recent: List[str] = []
         self._load()
-
-    def _repo_root(self) -> Path:
-        return Path(__file__).resolve().parents[1]
-
+    def _repo_root(self) -> Path: return Path(__file__).resolve().parents[1]
     def _candidates(self) -> List[Path]:
-        return [
-            self._repo_root() / "assets" / "live_actions.json",
-            Path.cwd() / "assets" / "live_actions.json",
-        ]
-
+        return [self._repo_root() / "assets" / "live_actions.json", Path.cwd() / "assets" / "live_actions.json"]
     def _load(self) -> None:
         for p in self._candidates():
             if p.is_file():
@@ -179,8 +146,7 @@ class LivePack:
                     elif isinstance(data, dict):
                         self._msgs = [str(x).strip() for x in data.get("messages", []) if str(x).strip()]
                     break
-                except Exception:
-                    pass
+                except Exception: pass
         if not self._msgs:
             self._msgs = [
                 "Trener gestykuluje przy linii.",
@@ -189,15 +155,11 @@ class LivePack:
                 "Drużyna domowa pompuje tempo.",
                 "Zmiana ustawienia – bardziej ofensywnie.",
             ]
-
     def maybe(self) -> Optional[str]:
         if not self._msgs: return None
         pool = [m for m in self._msgs if m not in self._recent[-self.no_repeat_window:]] or self._msgs
-        msg = self.rng.choice(pool)
-        self._recent.append(msg)
-        return msg
+        msg = self.rng.choice(pool); self._recent.append(msg); return msg
 
-# === Modele domenowe ===
 @dataclass
 class Tactic:
     style: str = "balanced"
@@ -222,10 +184,7 @@ class TeamCtx:
     tactic: Tactic = field(default_factory=Tactic)
     players: List[Player] = field(default_factory=list)
 
-# === ROSTERY ===
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
-
+def _repo_root() -> Path: return Path(__file__).resolve().parents[1]
 def _group_pos(pos_raw: str) -> str:
     p = (pos_raw or "").upper()
     if "GK" in p or "KEEP" in p or "BR" in p: return "GK"
@@ -235,8 +194,7 @@ def _group_pos(pos_raw: str) -> str:
 
 def _load_roster_from_json(team_name: str) -> List[Player]:
     p = _repo_root() / "data" / "teams.json"
-    if not p.is_file():
-        return []
+    if not p.is_file(): return []
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
     except Exception:
@@ -248,8 +206,8 @@ def _load_roster_from_json(team_name: str) -> List[Player]:
         teams = data
     tnorm = _norm(team_name)
     for t in teams:
-        nm = str(t.get("name",""))
-        if not nm: 
+        nm = str(t.get("name", ""))
+        if not nm:
             continue
         if _norm(nm) == tnorm or tnorm in _norm(nm):
             out = []
@@ -271,11 +229,9 @@ def _fallback_roster() -> List[Player]:
     return [Player(n, p) for n,p in names]
 
 def _ensure_roster(team: TeamCtx) -> None:
-    if team.players:
-        return
-    team.players = _load_roster_from_json(team.name) or _fallback_roster()
+    if not team.players:
+        team.players = _load_roster_from_json(team.name) or _fallback_roster()
 
-# wybory graczy
 def _pick_attacker(team: TeamCtx, rng: random.Random) -> Player:
     pools = [
         [p for p in team.players if p.pos == "FWD"],
@@ -284,23 +240,19 @@ def _pick_attacker(team: TeamCtx, rng: random.Random) -> Player:
         [p for p in team.players if p.pos == "GK"],
     ]
     for pool in pools:
-        if pool:
-            return rng.choice(pool)
+        if pool: return rng.choice(pool)
     return Player(team.name + " Player", "FWD")
 
 def _pick_assister(team: TeamCtx, shooter: Player, rng: random.Random) -> Optional[Player]:
-    candidates = (
-        [p for p in team.players if p.pos == "MID" and p.name != shooter.name] +
-        [p for p in team.players if p.pos == "FWD" and p.name != shooter.name] +
-        [p for p in team.players if p.pos == "DEF" and p.name != shooter.name]
-    )
+    candidates = ([p for p in team.players if p.pos == "MID" and p.name != shooter.name] +
+                  [p for p in team.players if p.pos == "FWD" and p.name != shooter.name] +
+                  [p for p in team.players if p.pos == "DEF" and p.name != shooter.name])
     return rng.choice(candidates) if candidates else None
 
 def _pick_gk(team: TeamCtx) -> Player:
     gks = [p for p in team.players if p.pos == "GK"]
     return gks[0] if gks else Player("Bramkarz", "GK")
 
-# === Pomoce: rozkład kontroli i prawdopodobieństwa ===
 def _control_share_eff(a: TeamCtx, b: TeamCtx, modA: float, modB: float) -> float:
     a_ctrl = (a.mid*modA) * 0.6 + (a.atk*modA) * 0.3 + (a.deff*modA) * 0.1
     b_ctrl = (b.mid*modB) * 0.6 + (b.atk*modB) * 0.3 + (b.deff*modB) * 0.1
@@ -335,7 +287,6 @@ def _fmt(minute: str, team: str, text: str) -> str:
 def _clamp(v: float, lo=30.0, hi=95.0) -> float:
     return max(lo, min(hi, v))
 
-# syntetyczne atrybuty do DuelSystem
 def _synth_attrs(team: TeamCtx, p: Player) -> Dict[str, float]:
     tA, tM, tD = team.atk, team.mid, team.deff
     name = p.name
@@ -377,9 +328,9 @@ def _synth_attrs(team: TeamCtx, p: Player) -> Dict[str, float]:
             "decisions":  _clamp(48 + 0.55*tM),
             "positioning":_clamp(48 + 0.45*tM),
             "stamina":    _clamp(65 + 0.35*tM, hi=100),
-            "reflexes":   45.0, "handling": 45.0, "marking": _clamp(45 + 0.35*tD), "tackling": _clamp(45 + 0.35*tD), "concentration": _clamp(45 + 0.45*tM)
+            "reflexes":   45.0, "handling": 45.0, "marking": _clamp(45 + 0.35*tD),
+            "tackling":   _clamp(45 + 0.35*tD), "concentration": _clamp(45 + 0.45*tM)
         }
-    # DEF
     return {
         "name": name,
         "tackling":    _clamp(50 + 0.55*tD),
@@ -396,7 +347,6 @@ def _synth_attrs(team: TeamCtx, p: Player) -> Dict[str, float]:
         "stamina":     _clamp(65 + 0.35*tD, hi=100),
     }
 
-# === Statystyki indywidualne do ocen ===
 def _init_player_stats(team: TeamCtx) -> Dict[str, Dict[str, float]]:
     s: Dict[str, Dict[str, float]] = {}
     for p in team.players:
@@ -404,37 +354,33 @@ def _init_player_stats(team: TeamCtx) -> Dict[str, Dict[str, float]]:
     return s
 
 def _bump(d: Dict[str, Dict[str, float]], name: str, key: str, val: float = 1.0):
-    if name not in d: d[name] = dict(goals=0,assists=0,shots=0,on_target=0,saves=0,fouls=0,yc=0,rc=0,duel_plus=0,duel_minus=0,pos="MID")
+    if name not in d:
+        d[name] = dict(goals=0,assists=0,shots=0,on_target=0,saves=0,fouls=0,yc=0,rc=0,duel_plus=0,duel_minus=0,pos="MID")
     d[name][key] = d[name].get(key,0) + val
 
 def _compute_ratings(team: TeamCtx, stats: Dict[str, Dict[str, float]], goals_conceded: int) -> List[Tuple[str, float, Dict[str,float]]]:
     out = []
     for p in team.players:
         st = stats.get(p.name, {})
-        g  = st.get("goals",0); a = st.get("assists",0)
-        sh = st.get("shots",0); sot = st.get("on_target",0)
-        sv = st.get("saves",0)
-        fl = st.get("fouls",0); yc = st.get("yc",0); rc = st.get("rc",0)
-        dp = st.get("duel_plus",0); dm = st.get("duel_minus",0)
+        g,a,sh,sot,sv = st.get("goals",0), st.get("assists",0), st.get("shots",0), st.get("on_target",0), st.get("saves",0)
+        fl,yc,rc = st.get("fouls",0), st.get("yc",0), st.get("rc",0)
+        dp,dm = st.get("duel_plus",0), st.get("duel_minus",0)
         base = 6.0
         base += 0.9*g + 0.5*a + 0.1*sot
         base += 0.2*sv
         base += 0.2*dp - 0.1*dm
         base -= 0.05*fl + 0.3*yc + 1.0*rc
-        if p.pos in ("GK","DEF"):
-            base -= 0.05*goals_conceded
+        if p.pos in ("GK","DEF"): base -= 0.05*goals_conceded
         base = max(4.0, min(10.0, round(base,1)))
         out.append((p.name, base, st))
     return out
 
-# === Symulacja ===
 def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[str, Any]:
     rng = random.Random(seed)
-    comments = CommentPack(pack="pl_fun", rng=rng, no_repeat_window=3)
+    comments = CommentPack(pack=CMT_PACK, rng=rng, no_repeat_window=3)
     livepack = LivePack(rng=rng, no_repeat_window=5)
 
-    _ensure_roster(teamA)
-    _ensure_roster(teamB)
+    _ensure_roster(teamA); _ensure_roster(teamB)
 
     log: List[str] = []
     score = [0, 0]
@@ -443,14 +389,19 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
     fouls_t = [0, 0]
     yc_t = [0, 0]
     rc_t = [0, 0]
-    mod = [1.0, 1.0]  # osłabienie po czerwonej: A,B
+    mod = [1.0, 1.0]
     live_duel_left = rng.randint(LIVE_DUEL_MIN, LIVE_DUEL_MAX)
+    duels_done = 0
 
-    # indywidualne staty do ocen
+    # xG i posiadanie
+    xg = [0.0, 0.0]
+    pos_ticks = [0.0, 0.0]
+
+    # indywidualne staty
     pstatsA = _init_player_stats(teamA)
     pstatsB = _init_player_stats(teamB)
 
-    anti_zero_used = [False, False]  # czy już aktywowaliśmy boost
+    anti_zero_used = [False, False]
 
     def _add_goal_line(minute: str, att_team_name: str, idx: int, sp_tag: str = "", shooter: Optional[str]=None, assister: Optional[str]=None):
         tag = f" {sp_tag}" if sp_tag else ""
@@ -463,6 +414,7 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
         log.append(f"{minute} ⚽ GOL! [{att_team_name}] {score[0]}:{score[1]} — Krótki rozbieg i chłodna głowa – gol!{tag}{extra}")
 
     def _apply_engagement(idx: int, minute_real: int, p_action: float, p_sh: float, p_gl: float) -> Tuple[float,float,float]:
+        if not ENG_ON: return p_action, p_sh, p_gl
         late = minute_real >= 60
         att_lead = score[idx] - score[1-idx]
         if att_lead >= 1:
@@ -475,29 +427,40 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
             p_action *= m; p_sh *= m; p_gl *= m
         return p_action, p_sh, p_gl
 
+    def _live_duel_rate(minute_real: int, idx_att: int) -> float:
+        rate = LIVE_DUEL_RATE0
+        lead = score[idx_att] - score[1-idx_att]
+        if minute_real >= 60:
+            if lead < 0:
+                rate *= 2.0
+                if lead <= -2: rate *= 1.3
+            elif lead > 0:
+                rate *= 0.85
+        if minute_real >= 80 and live_duel_left > 0:
+            rate *= 1.7
+        return min(0.45, rate)
+
     def _resolve_live_duel(minute: str, minute_real: int, attA: bool) -> bool:
-        nonlocal live_duel_left, score, shots, on_target
-        if live_duel_left <= 0: 
+        nonlocal live_duel_left, duels_done, score, shots, on_target, xg
+        if live_duel_left <= 0:
             return False
-        if rng.random() >= LIVE_DUEL_RATE:
+        idx = 0 if attA else 1
+        if rng.random() >= _live_duel_rate(minute_real, idx):
             return False
 
-        live_duel_left -= 1
+        live_duel_left -= 1; duels_done += 1
 
         att, deff = (teamA, teamB) if attA else (teamB, teamA)
-        idx = 0 if attA else 1
-
-        # wybór typu duelu
+        # typ duelu
         duel_type = rng.choices(["dribble","pass","shoot","penalty"], weights=[0.35,0.25,0.30,0.10])[0]
 
-        # wybór graczy
+        # wybór graczy i akcji
         if duel_type == "penalty":
             attacker = _pick_attacker(att, rng)
             if attacker.pos == "DEF":
                 attacker = _pick_attacker(att, rng)
             gk = _pick_gk(deff)
-            a_attrs = _synth_attrs(att, attacker)
-            d_attrs = _synth_attrs(deff, gk)
+            a_attrs = _synth_attrs(att, attacker); d_attrs = _synth_attrs(deff, gk)
             a_act = rng.choice(["penalty_left","penalty_right","penalty_center"])
             d_act = rng.choice(["gk_dive_left","gk_dive_right","gk_stay"])
             header = f"🎮 LIVE DUEL: karny — {attacker.name} vs {gk.name} ({a_act} vs {d_act})"
@@ -505,8 +468,7 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
         else:
             attacker = _pick_attacker(att, rng)
             defender = _pick_gk(deff) if duel_type == "shoot" and rng.random() < 0.8 else _pick_attacker(deff, rng)
-            a_attrs = _synth_attrs(att, attacker)
-            d_attrs = _synth_attrs(deff, defender)
+            a_attrs = _synth_attrs(att, attacker); d_attrs = _synth_attrs(deff, defender)
             if duel_type == "dribble":
                 a_act = "dribble"; d_act = rng.choices(["press","tackle","block"], weights=[0.4,0.4,0.2])[0]
             elif duel_type == "pass":
@@ -521,30 +483,32 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
         for c in res.get("commentary", []):
             log.append(_fmt(minute, att.name, c + " (LIVE DUEL)"))
 
-        # statystyki / wynik + pstats
+        # statystyki i xG
         oc = res.get("outcome")
+        i = 0 if attA else 1
         if oc in ("goal","shot_saved","shot_wide"):
-            shots[idx] += 1
-            _bump(pstatsA if idx==0 else pstatsB, attacker.name, "shots", 1)
+            shots[i] += 1
+            _bump(pstatsA if i==0 else pstatsB, attacker.name, "shots", 1)
+            xg[i] += float(res.get("xg", 0.0))
         if oc in ("goal","shot_saved"):
-            on_target[idx] += 1
-            _bump(pstatsA if idx==0 else pstatsB, attacker.name, "on_target", 1)
+            on_target[i] += 1
+            _bump(pstatsA if i==0 else pstatsB, attacker.name, "on_target", 1)
             if oc == "shot_saved" and ("gk" in d_act or duel_type=="penalty"):
-                _bump(pstatsB if idx==0 else pstatsA, defender_name, "saves", 1)
+                _bump(pstatsB if i==0 else pstatsA, defender_name, "saves", 1)
 
         if oc == "goal":
-            score[idx] += 1
-            _bump(pstatsA if idx==0 else pstatsB, attacker.name, "goals", 1)
-            _bump(pstatsA if idx==0 else pstatsB, attacker.name, "duel_plus", 1)
-            _add_goal_line(minute, att.name, idx, sp_tag=" [z LIVE DUEL]", shooter=attacker.name, assister=None)
+            score[i] += 1
+            _bump(pstatsA if i==0 else pstatsB, attacker.name, "goals", 1)
+            _bump(pstatsA if i==0 else pstatsB, attacker.name, "duel_plus", 1)
+            _add_goal_line(minute, att.name, i, sp_tag=" [z LIVE DUEL]", shooter=attacker.name, assister=None)
         elif oc in ("breakthrough","key_pass"):
-            _bump(pstatsA if idx==0 else pstatsB, attacker.name, "duel_plus", 0.5)
+            _bump(pstatsA if i==0 else pstatsB, attacker.name, "duel_plus", 0.5)
         elif oc in ("intercept","shot_saved"):
-            _bump(pstatsB if idx==0 else pstatsA, defender_name, "duel_plus", 0.5)
+            _bump(pstatsB if i==0 else pstatsA, defender_name, "duel_plus", 0.5)
         elif oc in ("lost","shot_wide"):
-            _bump(pstatsA if idx==0 else pstatsB, attacker.name, "duel_minus", 0.5)
+            _bump(pstatsA if i==0 else pstatsB, attacker.name, "duel_minus", 0.5)
         elif oc == "foul":
-            _bump(pstatsB if idx==0 else pstatsA, defender_name, "fouls", 1)
+            _bump(pstatsB if i==0 else pstatsA, defender_name, "fouls", 1)
 
         return True
 
@@ -554,7 +518,6 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
 
         for vm in range(1, vmin_total + 1):
             minute = _minute_label_str(first_half, vm)
-            # real minute (1..90+): licz bez parsowania stringa
             if vm <= HALF_VMINUTES:
                 scaled = math.ceil(vm * 45 / HALF_VMINUTES)
                 minute_real = scaled if first_half else 45 + max(1, scaled)
@@ -563,15 +526,18 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                 minute_real = (45 if first_half else 90) + extra
 
             controlA = _control_share_eff(teamA, teamB, mod[0], mod[1])
-            lead = score[0] - score[1]  # >0: A prowadzi
 
             for _ in range(MAX_ACTIONS_PER_MIN):
+                # posiadanie (tick)
+                pos_ticks[0] += controlA
+                pos_ticks[1] += (1.0 - controlA)
+
                 # LIVE DUEL
                 attA = (rng.random() < controlA)
                 if _resolve_live_duel(minute, minute_real, attA):
                     continue
 
-                # szansa na standardową akcję
+                # standardowa akcja?
                 p_action = BASE_ACTION_P
                 p_action *= (0.95 + 0.10 * (controlA - 0.5) * 2)
                 p_action *= (teamA.tactic.action_rate_mod * controlA + teamB.tactic.action_rate_mod * (1 - controlA))
@@ -583,12 +549,12 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                 idx = 0 if attA else 1
                 opp = 1 - idx
 
-                # zaangażowanie
+                # szanse
                 p_sh = _p_shot(att, deff)
                 p_gl = _p_goal(att, deff)
                 p_action, p_sh, p_gl = _apply_engagement(idx, minute_real, p_action, p_sh, p_gl)
 
-                # anti-zero po 70' dla przegrywającego
+                # anti-zero
                 if minute_real >= ANTI_ZERO_MINUTE and score[idx] < score[opp] and shots[idx] == 0 and not anti_zero_used[idx]:
                     p_sh *= ANTI_ZERO_BOOST
 
@@ -598,16 +564,16 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                 if rng.random() >= p_action:
                     continue
 
-                sp_kind = None  # 'corner' | 'freekick' | None
+                sp_kind = None
 
-                # 1) FAUL?
+                # FAUL?
                 if rng.random() < FOUL_RATE:
                     def_fouls = rng.random() < FOUL_DEFENDERS_BIAS
                     fouler_idx = opp if def_fouls else idx
                     fouls_t[fouler_idx] += 1
                     foul_team = teamA.name if fouler_idx == 0 else teamB.name
 
-                    # przypisz winnego (do ocen)
+                    # przypisz winnego
                     if def_fouls:
                         pool = [p for p in (teamB.players if idx==0 else teamA.players) if p.pos in ("DEF","MID")] or (teamB.players if idx==0 else teamA.players)
                         fouler = rng.choice(pool)
@@ -621,8 +587,7 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
 
                     r = rng.random()
                     if r < RED_PROB:
-                        rc_t[fouler_idx] += 1
-                        mod[fouler_idx] *= RED_MOD
+                        rc_t[fouler_idx] += 1; mod[fouler_idx] *= RED_MOD
                         _bump(pstatsA if fouler_idx==0 else pstatsB, fouler.name, "rc", 1)
                         log.append(_fmt(minute, foul_team, "🟥 Czerwona kartka!"))
                     elif r < RED_PROB + YELLOW_PROB:
@@ -636,7 +601,7 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                         idx, opp = opp, idx
                     log.append(_fmt(minute, att.name, "🎯 Rzut wolny"))
 
-                # 2) SFG / zapowiedź
+                # SFG / zapowiedź
                 if sp_kind is None:
                     if rng.random() < SET_PIECE_RATE:
                         sp_kind = "corner" if rng.random() < CORNER_SHARE else "freekick"
@@ -645,24 +610,26 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                         ann = comments.pick("announce", team=att.name, minute=minute)
                         log.append(_fmt(minute, att.name, ann))
 
-                # 3) Rezultat
+                # Rezultat
                 if rng.random() < p_sh:
                     shots[idx] += 1
-                    if minute_real >= ANTI_ZERO_MINUTE and shots[idx] == 1:
-                        anti_zero_used[idx] = True
-                    shooter = _pick_attacker(att, rng)
+                    if minute_real >= ANTI_ZERO_MINUTE and shots[idx] == 1: anti_zero_used[idx] = True
+                    shooter = rng.choice(att.players) if att.players else _pick_attacker(att, rng)
+                    if shooter.pos == "GK": shooter = _pick_attacker(att, rng)
                     _bump(pstatsA if idx==0 else pstatsB, shooter.name, "shots", 1)
 
+                    # xG dla strzału (SFG lekki bonus)
+                    shot_xg = p_gl * (1.10 if sp_kind == "freekick" else (1.05 if sp_kind == "corner" else 1.00))
+                    xg[idx] += float(max(0.01, min(0.95, shot_xg)))
+
                     if rng.random() < p_gl:
-                        score[idx] += 1
-                        on_target[idx] += 1
+                        score[idx] += 1; on_target[idx] += 1
                         _bump(pstatsA if idx==0 else pstatsB, shooter.name, "on_target", 1)
                         _bump(pstatsA if idx==0 else pstatsB, shooter.name, "goals", 1)
                         assister = None
                         if rng.random() < 0.70:
                             assister = _pick_assister(att, shooter, rng)
-                            if assister:
-                                _bump(pstatsA if idx==0 else pstatsB, assister.name, "assists", 1)
+                            if assister: _bump(pstatsA if idx==0 else pstatsB, assister.name, "assists", 1)
                         tag = "po rzucie rożnym" if sp_kind == "corner" else ("po rzucie wolnym" if sp_kind == "freekick" else "z akcji")
                         _add_goal_line(minute, att.name, idx, sp_tag=f"  ({tag})", shooter=shooter.name, assister=(assister.name if assister else None))
                     else:
@@ -684,19 +651,14 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                         log.append(_fmt(minute, att.name, "wolny niewykorzystany"))
                     else:
                         which = rng.random()
-                        if which < 0.4:
-                            rtxt = comments.pick("throw_in", team=att.name, minute=minute)
-                        elif which < 0.8:
-                            rtxt = comments.pick("clearance", team=att.name, minute=minute)
-                        else:
-                            rtxt = comments.pick("corner_wasted", team=att.name, minute=minute)
+                        if which < 0.4: rtxt = comments.pick("throw_in", team=att.name, minute=minute)
+                        elif which < 0.8: rtxt = comments.pick("clearance", team=att.name, minute=minute)
+                        else: rtxt = comments.pick("corner_wasted", team=att.name, minute=minute)
                         log.append(_fmt(minute, att.name, rtxt))
 
-            # 5) Live action (kosmetyka)
             if rng.random() < LIVE_RATE:
                 msg = livepack.maybe()
-                if msg:
-                    log.append(f"{minute} 🟢 LIVE: {msg}")
+                if msg: log.append(f"{minute} 🟢 LIVE: {msg}")
 
         return add
 
@@ -705,10 +667,19 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
     add2 = sim_half(first_half=False)
     log.append(f"FT • Koniec ({score[0]}:{score[1]}). Doliczono +{add2}'.")
 
-    # === OCENY 1–10 ===
+    # Posiadanie %
+    total_ticks = max(1e-6, pos_ticks[0] + pos_ticks[1])
+    posA = int(round(100.0 * pos_ticks[0] / total_ticks))
+    posB = 100 - posA
+
+    # xG podsumowanie
+    xgA, xgB = round(xg[0], 2), round(xg[1], 2)
+    log.append(f"📊 xG: {teamA.name} {xgA:.2f} – {teamB.name} {xgB:.2f}")
+    log.append(f"🔁 Posiadanie: {teamA.name} {posA}% – {teamB.name} {posB}%")
+
+    # Oceny
     ratingsA = _compute_ratings(teamA, pstatsA, goals_conceded=score[1])
     ratingsB = _compute_ratings(teamB, pstatsB, goals_conceded=score[0])
-
     log.append("⭐ OCENY PIŁKARZY (1–10)")
     log.append(f"   {teamA.name}:")
     for name, rate, st in ratingsA:
@@ -724,6 +695,8 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
         "on_target": {"A": on_target[0], "B": on_target[1]},
         "fouls": {"A": fouls_t[0], "B": fouls_t[1]},
         "cards": {"A": {"yellow": yc_t[0], "red": rc_t[0]}, "B": {"yellow": yc_t[1], "red": rc_t[1]}},
+        "xg": {"A": xgA, "B": xgB},
+        "possession": {"A": posA, "B": posB},
         "seed": seed,
         "ratings": { "A": ratingsA, "B": ratingsB },
     }
