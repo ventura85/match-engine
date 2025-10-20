@@ -1,117 +1,116 @@
 {
-    "corner_parried": [
-      "Golkiper paruje bombę na róg!",
-      "Instynktowna ręka – tylko korner.",
-      "Refleks kota! Paruje za linię końcową.",
-      "Parada na zdjęcia – będzie róg!"
-    ],
-    "corner_blocked": [
-      "Rykoszet i poza linią – rzut rożny!",
-      "Mur staje jak beton – piłka na róg.",
-      "Ofiarny blok, to musi być korner.",
-      "Zatrzymane na ostatniej chwili – róg!"
-    ],
-    "shot_on_target": [
-      "Mocny strzał po ziemi – bramkarz z klasą!",
-      "Celnie pod poprzeczkę – golkiper z trudem odbija.",
-      "Ślizgający w długi róg – świetna interwencja!",
-      "Kąśliwe uderzenie – wyciągnięte jak z kapelusza!"
-    ],
-    "shot_off_target": [
-      "Minimalnie obok dalszego słupka.",
-      "Piłka przelatuje nad poprzeczką.",
-      "To powinno siedzieć – ale obok!",
-      "Uderzenie 'na pamięć' – daleko od bramki."
-    ],
-    "freekick": [
-      "Rzut wolny – szansa na groźną wrzutkę.",
-      "Ustawiają mur, będzie dośrodkowanie.",
-      "Wolny z dystansu – mogą strzelać bezpośrednio.",
-      "Wolny ze skraju pola karnego – pachnie okazją."
-    ],
-    "penalty_miss": [
-      "Bramkarz wyczuł intencje!",
-      "Słupek! Niewiarygodne pudło z wapna.",
-      "Lekki strzał – golkiper łapie bez kłopotu.",
-      "Ponad bramką! Jedenastka zmarnowana."
-    ],
-    "penalty_goal": [
-      "Jedenastka! Pewnie przy słupku.",
-      "Krótki rozbieg i chłodna głowa – gol!",
-      "W przeciwny róg bramkarza – bez szans.",
-      "Rakietą w okienko – karny bezdyskusyjny."
-    ],
-    "freekick_goal": [
-      "Nad murem i do siatki – majstersztyk!",
-      "Lewitująca po koźle – nie do obrony.",
-      "Kręcona w okno! Stadion na nogach.",
-      "Mierzone pod poprzeczkę – genialne wykonanie."
-    ],
-    "build_up_short": [
-      "Krótka klepka, cierpliwe budowanie.",
-      "Zagranie na ścianę i ruch bez piłki.",
-      "Gra na małej przestrzeni – szukają trójkąta.",
-      "Dwa kontakty, tempo rośnie."
-    ],
-    "build_up_medium": [
-      "Zmienna wysokość ataku, wachlowanie piłką – czekają na lukę.",
-      "Odwrócenie strony i wjazd półprzestrzenią.",
-      "Rytm rośnie, przeciwnik tylko przesuwa blok.",
-      "Cierpliwie w ataku pozycyjnym – kontrolują sytuację."
-    ],
-    "duel_context": [
-      "Minięty wślizg i korytarz do strzału!",
-      "Zwód do środka, obrońca spóźniony o metr.",
-      "Przepchnięty bark w bark – strzał z marszu.",
-      "Rolka i zejście na lewą – jest pozycja."
-    ],
-    "duel_shot_saved": [
-      "Strzał z bliska – kapitalna parada!",
-      "Krótkim rogiem, ale bramkarz czujny.",
-      "Wystawia nogę w ostatniej chwili – broni!",
-      "Piekielnie mocno, jednak zatrzymane!"
-    ],
-    "micro_pass_chain": [
-      "Trójkąt podań w bocznym sektorze.",
-      "Nawroty i wymiana na jeden kontakt.",
-      "Kapitalna asekuracja i utrzymanie piłki.",
-      "Szybka klepka, przeciwnik goni cień."
-    ],
-    "micro_press": [
-      "Wysoki pressing, wymuszone zagranie do tyłu.",
-      "Podwajają przy linii – oddechu brak.",
-      "Zamyka wyjście, zostaje wykop.",
-      "Doskok w tempo – przeciwnik wybija na pałę."
-    ],
-    "micro_throw_in": [
-      "Aut na wysokości pola karnego – szybko wznawiają.",
-      "Daleki wrzut z autu, zamieszanie!",
-      "Krótko z autu i znowu rytm.",
-      "Wrzut z autu do środkowej strefy – utrzymują."
-    ],
-    "micro_goal_kick": [
-      "Wznowienie od bramki, rozgrywają na krótko.",
-      "Długi wykop – walka o drugą piłkę.",
-      "Rozpoczynają spokojnie od obrońców.",
-      "Krótko do boku i powolne budowanie."
-    ],
-    "micro_clearance": [
-      "Wybicie „gdziekolwiek”, ale oddalają zagrożenie.",
-      "Czyściutko głową – zagrożenie zażegnane.",
-      "Na oślep byle dalej – i jest oddech.",
-      "Mocnym wybiciem resetują akcję."
-    ],
-    "yellow": [
-      "🟨 Twardo i spóźniony – żółta kartka.",
-      "🟨 Taktyczny faul i kartonik.",
-      "🟨 Gwizdek i kartka bez dyskusji.",
-      "🟨 Zbyt ostry wślizg – notatka sędziego."
-    ],
-    "red_card": [
-      "🟥 Brutalny wślizg – wylot!",
-      "🟥 Druga żółta i w konsekwencji czerwona.",
-      "🟥 Agresja poza przepisami – nie ma litości.",
-      "🟥 Faul ratunkowy jako ostatni – do szatni."
-    ]
-  }
-  
+  "announce": [
+    "Krótka klepka, cierpliwe budowanie.",
+    "Dwa kontakty, tempo rośnie.",
+    "Trójkąt podań w bocznym sektorze.",
+    "Gra na małej przestrzeni – szukają trójkąta.",
+    "Odwrócenie strony i wjazd półprzestrzenią.",
+    "Wysoki pressing, wymuszone zagranie do tyłu.",
+    "Zmienna wysokość ataku, wachlowanie piłką.",
+    "Rozpoczynają spokojnie od obrońców.",
+    "Krótko z autu i znowu rytm.",
+    "Szybka klepka, przeciwnik goni cień.",
+    "Rytm rośnie, przeciwnik tylko przesuwa blok.",
+    "Zagranie na ścianę i ruch bez piłki.",
+    "Nawroty i wymiana na jeden kontakt.",
+    "Gra na wolne pole – jest przestrzeń!",
+    "Wejście półprzestrzenią – pachnie okazją.",
+    "Rozciągają obronę szeroko.",
+    "Dośrodkowanie przygotowywane z prawej flanki.",
+    "Zacieśniają środek, szukają prostopadłego.",
+    "Klepa przy linii – sprytne granie.",
+    "Cierpliwie – kontrola rytmu."
+  ],
+
+  "shot_saved": [
+    "🧤 Golkiper z klasą – broni pewnie!",
+    "🧤 Kapitalna parada! Strzał zatrzymany.",
+    "🧤 Refleks kota – piąstkuje poza pole.",
+    "🧤 Świetna interwencja – kąśliwe uderzenie zatrzymane.",
+    "🧤 Ratuje z linii! Fenomenalny refleks.",
+    "🧤 Zamraża sytuację – łapie bez problemu.",
+    "🧤 Instynktownie nogą – niewiarygodna obrona!",
+    "🧤 Wyciąga to z okienka – cudowna parada."
+  ],
+
+  "shot_off": [
+    "❌ Minimalnie obok dalszego słupka.",
+    "❌ Piłka przelatuje nad poprzeczką.",
+    "❌ Zabrakło precyzji – obok.",
+    "❌ Uderzenie 'na pamięć' – daleko od bramki.",
+    "❌ Pół metra obok – szkoda!",
+    "❌ Nieczysto trafione – bez zagrożenia.",
+    "❌ Lekko mu „zjechała” – bez historii."
+  ],
+
+  "clearance": [
+    "Na oślep byle dalej – i jest oddech.",
+    "Mocnym wybiciem resetują akcję.",
+    "Czyściutko głową – zagrożenie zażegnane.",
+    "Wybicie spod nóg w ostatniej chwili.",
+    "Wyjaśniają sytuację, daleko od pola karnego.",
+    "Wspólna asekuracja – zamykają korytarze."
+  ],
+
+  "throw_in": [
+    "Wrzut z autu do środkowej strefy – utrzymują.",
+    "Aut na wysokości pola karnego – szybko wznawiają.",
+    "Daleki wrzut z autu, robi się zamieszanie!",
+    "Krótko z autu i gra od nowa."
+  ],
+
+  "corner_wasted": [
+    "Krótki róg nie wyszedł – strata przewagi.",
+    "Zbyt płaskie dośrodkowanie – wybijają.",
+    "Róg bez pazura – piłka przechwycona.",
+    "Dośrodkowanie za długie – aut bramkowy.",
+    "Zagrali schemat, ale bez skutku.",
+    "Pierwszy słupek zamknięty – nic z tego."
+  ],
+
+  "goal": [
+    "⚽ Huknął bez przyjęcia – nie do obrony!",
+    "⚽ Precyzyjnie przy słupku – stadiony świata!",
+    "⚽ Przytomne wykończenie z bliska!",
+    "⚽ Mierzony strzał – bramkarz bez szans!",
+    "⚽ Strzał z pierwszej piłki – idealne dogranie!",
+    "⚽ Piękna akcja i chłodne wykończenie!"
+  ],
+
+  // Dodatkowe klucze pod przyszłe użycie (silnik może je ignorować do czasu patcha):
+  "goal_corner": [
+    "⚽ Po rogu – zamieszanie i piłka wpada!",
+    "⚽ „Druga piłka” po kornerze i do siatki!",
+    "⚽ Główka po dośrodkowaniu z rogu – gol!"
+  ],
+  "goal_freekick": [
+    "⚽ Po wolnym – precyzyjne dośrodkowanie i wykończenie!",
+    "⚽ Wolny rozegrany krótko, zaskakują rywala – gol!",
+    "⚽ Bezpośrednio z wolnego? Prawie – dobitka w siatce!"
+  ],
+  "penalty_scored": [
+    "⚽ Jedenastka wykorzystana – pewnie przy słupku!",
+    "⚽ Spokojnie w przeciwny róg – gol!",
+    "⚽ Zmylił bramkarza i trafia!"
+  ],
+  "penalty_saved": [
+    "🧤 Karny obroniony – bramkarz wyczuł stronę!",
+    "🧤 Kapitalna interwencja z 11 metrów!",
+    "🧤 Zatrzymany z wapna! Co za moment!"
+  ],
+  "duel_win": [
+    "✨ Mija rywala i ma otwartą drogę!",
+    "✨ Kluczowe podanie – otwiera korytarz!",
+    "✨ Wygrywa fizyczny pojedynek – jedzie dalej!"
+  ],
+  "duel_lose": [
+    "🚫 Zatrzymany – dobra asekuracja.",
+    "🚫 Przecięte podanie – czytają zamiar.",
+    "🚫 Odepchnięty plecami – bez faulu."
+  ],
+  "live_general": [
+    "🟢 LIVE: Trener gestykuluje przy linii.",
+    "🟢 LIVE: Kibice głośniejsi – rośnie presja.",
+    "🟢 LIVE: Zmiana ustawienia – bardziej ofensywnie."
+  ]
+}
