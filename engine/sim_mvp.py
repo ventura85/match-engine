@@ -4,45 +4,66 @@ from typing import List, Dict, Any, Optional, Tuple
 import random, math, json, re, unicodedata
 from pathlib import Path
 from engine.duel import DuelSystem
-from engine.config import CFG  # <-- KONFIG Z PLIKU
+from engine.config import CFG  # konfiguracja
 
-# --- Parametry z configu ---
-HALF_VMINUTES       = CFG.MATCH.HALF_VMINUTES
-STOPPAGE_PER_HALF   = CFG.MATCH.STOPPAGE_PER_HALF
-MAX_ACTIONS_PER_MIN = CFG.MATCH.MAX_ACTIONS_PER_MIN
-BASE_ACTION_P       = CFG.MATCH.BASE_ACTION_P
+# --- CONFIG (bezpieczne fallbacki, gdy brak pól w CFG) ---
+def _get(ns, key, default): return getattr(ns, key, default) if ns else default
 
-SET_PIECE_RATE      = CFG.SET.RATE
-CORNER_SHARE        = CFG.SET.CORNER_SHARE
+MATCH = getattr(CFG, "MATCH", None)
+SET   = getattr(CFG, "SET", None)
+FOULS = getattr(CFG, "FOULS", None)
+LIVE  = getattr(CFG, "LIVE", None)
+DUEL  = getattr(CFG, "DUEL", None)
+ENG   = getattr(CFG, "ENG", None)
+AZ    = getattr(CFG, "AZ", None)
+CMT   = getattr(CFG, "CMT", None)
+FAT   = getattr(CFG, "FATIGUE", None)
 
-FOUL_RATE           = CFG.FOULS.RATE
-FOUL_DEFENDERS_BIAS = CFG.FOULS.DEFENDERS_BIAS
-YELLOW_PROB         = CFG.FOULS.YELLOW_PROB
-RED_PROB            = CFG.FOULS.RED_PROB
-RED_MOD             = CFG.FOULS.RED_MOD
+HALF_VMINUTES       = _get(MATCH, "HALF_VMINUTES", 14)     # 2x7 min wirtualnych
+STOPPAGE_PER_HALF   = tuple(_get(MATCH, "STOPPAGE_PER_HALF", (0,2)))
+MAX_ACTIONS_PER_MIN = _get(MATCH, "MAX_ACTIONS_PER_MIN", 2)
+BASE_ACTION_P       = _get(MATCH, "BASE_ACTION_P", 0.35)
 
-LIVE_RATE           = CFG.LIVE.RATE
-LIVE_DUEL_MIN       = CFG.DUEL.MIN
-LIVE_DUEL_MAX       = CFG.DUEL.MAX
-LIVE_DUEL_RATE0     = CFG.DUEL.RATE  # bazowe
+SET_PIECE_RATE      = _get(SET, "RATE", 0.18)
+CORNER_SHARE        = _get(SET, "CORNER_SHARE", 0.55)
 
-# --- Zaangażowanie ---
-ENG_ON                = CFG.ENG.ON
-ENG_LEAD_RELAX_EARLY  = CFG.ENG.LEAD_RELAX_EARLY
-ENG_LEAD_RELAX_LATE   = CFG.ENG.LEAD_RELAX_LATE
-ENG_TRAIL_PUSH_EARLY  = CFG.ENG.TRAIL_PUSH_EARLY
-ENG_TRAIL_PUSH_LATE   = CFG.ENG.TRAIL_PUSH_LATE
-ENG_RELAX_2PLUS_BONUS = CFG.ENG.RELAX_2PLUS_BONUS
-ENG_PUSH_2PLUS_BONUS  = CFG.ENG.PUSH_2PLUS_BONUS
+FOUL_RATE           = _get(FOULS, "RATE", 0.12)
+FOUL_DEFENDERS_BIAS = _get(FOULS, "DEFENDERS_BIAS", 0.7)
+YELLOW_PROB         = _get(FOULS, "YELLOW_PROB", 0.25)
+RED_PROB            = _get(FOULS, "RED_PROB", 0.02)
+RED_MOD             = _get(FOULS, "RED_MOD", 0.86)
 
-# Anti-zero
-ANTI_ZERO_MINUTE    = CFG.AZ.MINUTE
-ANTI_ZERO_BOOST     = CFG.AZ.BOOST
+LIVE_RATE           = _get(LIVE, "RATE", 0.25)
+LIVE_DUEL_MIN       = _get(DUEL, "MIN", 1)
+LIVE_DUEL_MAX       = _get(DUEL, "MAX", 3)
+LIVE_DUEL_RATE0     = _get(DUEL, "RATE", 0.18)
 
-# --- Komentarze ---
-CMT_PACK = CFG.CMT.PACK
+ENG_ON                = _get(ENG, "ON", True)
+ENG_LEAD_RELAX_EARLY  = _get(ENG, "LEAD_RELAX_EARLY", 0.96)
+ENG_LEAD_RELAX_LATE   = _get(ENG, "LEAD_RELAX_LATE", 0.93)
+ENG_TRAIL_PUSH_EARLY  = _get(ENG, "TRAIL_PUSH_EARLY", 1.04)
+ENG_TRAIL_PUSH_LATE   = _get(ENG, "TRAIL_PUSH_LATE", 1.08)
+ENG_RELAX_2PLUS_BONUS = _get(ENG, "RELAX_2PLUS_BONUS", 0.98)
+ENG_PUSH_2PLUS_BONUS  = _get(ENG, "PUSH_2PLUS_BONUS", 1.03)
 
-# --- Synonimy komentarzy + fallbacki ---
+ANTI_ZERO_MINUTE    = _get(AZ, "MINUTE", 70)
+ANTI_ZERO_BOOST     = _get(AZ, "BOOST", 1.35)
+
+CMT_PACK            = _get(CMT, "PACK", "pl_fun")
+
+# --- FATIGUE (model) ---
+FAT_ON             = _get(FAT, "ON", True)
+FAT_BASE_PER_MIN   = _get(FAT, "BASE_PER_MIN", 0.6)      # bazowy spadek / min dla zawodnika
+FAT_TEMPO_FACTOR   = _get(FAT, "TEMPO_FACTOR", {"defensive":0.95,"balanced":1.0,"attacking":1.10})
+FAT_PRESS_FACTOR   = _get(FAT, "PRESS_FACTOR", {"defensive":0.95,"balanced":1.0,"attacking":1.06})
+FAT_EVENT_BONUS    = _get(FAT, "EVENT_BONUS", 2.0)       # udział w akcji (strzał/SFG)
+FAT_DUEL_BONUS     = _get(FAT, "DUEL_BONUS", 3.5)        # udział w LIVE DUEL
+FAT_GK_BASE_FACTOR = _get(FAT, "GK_BASE_FACTOR", 0.4)    # GK mniej się męczy bazowo
+FAT_EFFECT_MIN     = _get(FAT, "EFFECT_MIN", 0.85)       # dolna granica wpływu zmęczenia na skuteczność
+FAT_LOW_THRESHOLD  = _get(FAT, "LOW_THRESHOLD", 55)      # poniżej tego wzrasta ryzyko faulu
+FAT_LOW_FOUL_BOOST = _get(FAT, "LOW_FOUL_BOOST", 0.40)   # do +40% FOUL_RATE przy skrajnie niskiej stam.
+
+# --- Komentarze (synonimy + fallback) ---
 SYNONYMS: Dict[str, List[str]] = {
     "announce": ["announce","akcja","ofensywa","offense","build_up","zapowiedz","atak","atak_zapowiedz"],
     "goal": ["goal","gol","bramka","trafienie","brameczka","jedenastka gol"],
@@ -162,7 +183,7 @@ class LivePack:
 
 @dataclass
 class Tactic:
-    style: str = "balanced"
+    style: str = "balanced"  # 'defensive' | 'balanced' | 'attacking'
     @property
     def action_rate_mod(self) -> float: return {"defensive": 0.92,"balanced": 1.00,"attacking": 1.08}.get(self.style,1.0)
     @property
@@ -219,7 +240,7 @@ def _load_roster_from_json(team_name: str) -> List[Player]:
             return out
     return []
 
-def _fallback_roster() -> List[Player]:
+def _fallback_rooster() -> List[Player]:
     names = [
         ("Jan Kowalski","GK"),
         ("Piotr Nowak","DEF"),("Marek Wiśniewski","DEF"),("Tomasz Kamiński","DEF"),("Krzysztof Lewandowski","DEF"),
@@ -230,7 +251,7 @@ def _fallback_roster() -> List[Player]:
 
 def _ensure_roster(team: TeamCtx) -> None:
     if not team.players:
-        team.players = _load_roster_from_json(team.name) or _fallback_roster()
+        team.players = _load_roster_from_json(team.name) or _fallback_rooster()
 
 def _pick_attacker(team: TeamCtx, rng: random.Random) -> Player:
     pools = [
@@ -253,6 +274,44 @@ def _pick_gk(team: TeamCtx) -> Player:
     gks = [p for p in team.players if p.pos == "GK"]
     return gks[0] if gks else Player("Bramkarz", "GK")
 
+# ---------------- FATIGUE UTILS ----------------
+def _stam_init(team: TeamCtx) -> Dict[str, float]:
+    # start od indywidualnej „stamina” z profilu, max 100
+    out = {}
+    for p in team.players:
+        base = 70.0
+        if p.pos == "GK": base = 75.0
+        # prosta zależność od atrybutów drużyny (im lepsza, tym lepsza kondycja bazowa)
+        if p.pos == "FWD": base += (team.atk - 60) * 0.5
+        elif p.pos == "MID": base += (team.mid - 60) * 0.5
+        else: base += (team.deff - 60) * 0.5
+        out[p.name] = max(50.0, min(100.0, base))
+    return out
+
+def _avg_stam(stam: Dict[str,float], pos_map: Dict[str,str], only: Optional[str]=None) -> float:
+    names = [n for n in stam if (only is None or pos_map.get(n)==only)]
+    if not names: return 100.0
+    return sum(stam[n] for n in names) / len(names)
+
+def _drain(stam: Dict[str,float], who: List[str], amount: float):
+    for n in who:
+        if n in stam:
+            stam[n] = max(0.0, stam[n] - amount)
+
+def _drain_base(stam: Dict[str,float], style: str, pos_map: Dict[str,str]):
+    if not FAT_ON: return
+    tempo = FAT_TEMPO_FACTOR.get(style, 1.0)
+    press = FAT_PRESS_FACTOR.get(style, 1.0)
+    base = FAT_BASE_PER_MIN * tempo * press
+    for n,v in list(stam.items()):
+        is_gk = pos_map.get(n) == "GK"
+        stam[n] = max(0.0, v - (base * (FAT_GK_BASE_FACTOR if is_gk else 1.0)))
+
+def _fatigue_factor(avg_stam: float) -> float:
+    # mapuje 0..100 -> [FAT_EFFECT_MIN .. 1.0]
+    return FAT_EFFECT_MIN + (1.0 - FAT_EFFECT_MIN) * (avg_stam/100.0)
+
+# ---------------- RESZTA NARZĘDZI ----------------
 def _control_share_eff(a: TeamCtx, b: TeamCtx, modA: float, modB: float) -> float:
     a_ctrl = (a.mid*modA) * 0.6 + (a.atk*modA) * 0.3 + (a.deff*modA) * 0.1
     b_ctrl = (b.mid*modB) * 0.6 + (b.atk*modB) * 0.3 + (b.deff*modB) * 0.1
@@ -284,68 +343,10 @@ def _minute_label_str(first_half: bool, vm: int) -> str:
 def _fmt(minute: str, team: str, text: str) -> str:
     return f"{minute} [{team}] {text}"
 
-def _clamp(v: float, lo=30.0, hi=95.0) -> float:
-    return max(lo, min(hi, v))
-
-def _synth_attrs(team: TeamCtx, p: Player) -> Dict[str, float]:
-    tA, tM, tD = team.atk, team.mid, team.deff
-    name = p.name
-    if p.pos == "GK":
-        return {
-            "name": name,
-            "reflexes":   _clamp(55 + 0.60*tD),
-            "handling":   _clamp(55 + 0.55*tD),
-            "positioning":_clamp(50 + 0.45*tD),
-            "concentration":_clamp(50 + 0.50*tD),
-            "speed":      _clamp(45 + 0.30*tD),
-            "tackling":   _clamp(40 + 0.20*tD),
-            "marking":    _clamp(40 + 0.20*tD),
-            "shooting":   _clamp(35 + 0.10*tA),
-            "stamina":    _clamp(65 + 0.30*tD, hi=100),
-            "decisions":  _clamp(50 + 0.45*tM),
-            "dribbling":  40.0,
-            "passing":    _clamp(45 + 0.35*tM),
-        }
-    if p.pos == "FWD":
-        return {
-            "name": name,
-            "shooting":   _clamp(50 + 0.60*tA),
-            "dribbling":  _clamp(48 + 0.50*tA),
-            "passing":    _clamp(45 + 0.40*tM),
-            "speed":      _clamp(50 + 0.50*tA),
-            "decisions":  _clamp(45 + 0.50*tM),
-            "positioning":_clamp(48 + 0.50*tA),
-            "stamina":    _clamp(60 + 0.30*((tA+tM)/2), hi=100),
-            "reflexes":   45.0, "handling": 45.0, "marking": 40.0, "tackling": 40.0, "concentration": _clamp(45 + 0.35*tM)
-        }
-    if p.pos == "MID":
-        return {
-            "name": name,
-            "dribbling":  _clamp(48 + 0.45*tM),
-            "passing":    _clamp(50 + 0.55*tM),
-            "shooting":   _clamp(45 + 0.35*tA),
-            "speed":      _clamp(48 + 0.40*tM),
-            "decisions":  _clamp(48 + 0.55*tM),
-            "positioning":_clamp(48 + 0.45*tM),
-            "stamina":    _clamp(65 + 0.35*tM, hi=100),
-            "reflexes":   45.0, "handling": 45.0, "marking": _clamp(45 + 0.35*tD),
-            "tackling":   _clamp(45 + 0.35*tD), "concentration": _clamp(45 + 0.45*tM)
-        }
-    return {
-        "name": name,
-        "tackling":    _clamp(50 + 0.55*tD),
-        "marking":     _clamp(50 + 0.55*tD),
-        "positioning": _clamp(48 + 0.50*tD),
-        "speed":       _clamp(45 + 0.35*tD),
-        "concentration":_clamp(48 + 0.50*tD),
-        "reflexes":    _clamp(45 + 0.20*tD),
-        "handling":    _clamp(45 + 0.20*tD),
-        "shooting":    _clamp(40 + 0.20*tA),
-        "dribbling":   _clamp(42 + 0.25*tM),
-        "passing":     _clamp(45 + 0.35*tM),
-        "decisions":   _clamp(45 + 0.40*tM),
-        "stamina":     _clamp(65 + 0.35*tD, hi=100),
-    }
+@dataclass
+class PlayerStats:
+    goals: int = 0; assists: int = 0; shots: int = 0; on_target: int = 0; saves: int = 0
+    fouls: int = 0; yc: int = 0; rc: int = 0; duel_plus: float = 0.0; duel_minus: float = 0.0; pos: str = "MID"
 
 def _init_player_stats(team: TeamCtx) -> Dict[str, Dict[str, float]]:
     s: Dict[str, Dict[str, float]] = {}
@@ -382,6 +383,14 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
 
     _ensure_roster(teamA); _ensure_roster(teamB)
 
+    # pozycje (do GK itp.)
+    posA = {p.name: p.pos for p in teamA.players}
+    posB = {p.name: p.pos for p in teamB.players}
+
+    # stamina per player
+    stamA = _stam_init(teamA)
+    stamB = _stam_init(teamB)
+
     log: List[str] = []
     score = [0, 0]
     shots = [0, 0]
@@ -392,6 +401,7 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
     mod = [1.0, 1.0]
     live_duel_left = rng.randint(LIVE_DUEL_MIN, LIVE_DUEL_MAX)
     duels_done = 0
+    last_duel_minute = None  # cooldown 1 „tick” (ta sama minuta)
 
     # xG i posiadanie
     xg = [0.0, 0.0]
@@ -427,6 +437,17 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
             p_action *= m; p_sh *= m; p_gl *= m
         return p_action, p_sh, p_gl
 
+    def _apply_fatigue_effects(idx_att: int, p_action: float, p_sh: float, p_gl: float) -> Tuple[float,float,float]:
+        if not FAT_ON: return p_action, p_sh, p_gl
+        atk_stam_avg = _avg_stam(stamA, posA) if idx_att == 0 else _avg_stam(stamB, posB)
+        def_stam_avg = _avg_stam(stamB, posB) if idx_att == 0 else _avg_stam(stamA, posA)
+        f_atk = _fatigue_factor(atk_stam_avg)         # 0.85..1.0
+        wear_def = (100.0 - def_stam_avg) / 100.0     # im bardziej zmęczona obrona, tym łatwiej o gol
+        p_action *= f_atk
+        p_sh *= f_atk
+        p_gl *= f_atk * (1.0 + 0.12 * wear_def)       # do +12% gdy obrona wyjechana
+        return p_action, p_sh, p_gl
+
     def _live_duel_rate(minute_real: int, idx_att: int) -> float:
         rate = LIVE_DUEL_RATE0
         lead = score[idx_att] - score[1-idx_att]
@@ -441,34 +462,33 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
         return min(0.45, rate)
 
     def _resolve_live_duel(minute: str, minute_real: int, attA: bool) -> bool:
-        nonlocal live_duel_left, duels_done, score, shots, on_target, xg
-        if live_duel_left <= 0:
+        nonlocal live_duel_left, duels_done, last_duel_minute, score, shots, on_target, xg
+        if live_duel_left <= 0: return False
+        if last_duel_minute == minute:  # cooldown: nie dwa duelle w dokładnie tej samej minucie
             return False
         idx = 0 if attA else 1
-        if rng.random() >= _live_duel_rate(minute_real, idx):
-            return False
+        if rng.random() >= _live_duel_rate(minute_real, idx): return False
 
-        live_duel_left -= 1; duels_done += 1
+        live_duel_left -= 1; duels_done += 1; last_duel_minute = minute
 
         att, deff = (teamA, teamB) if attA else (teamB, teamA)
-        # typ duelu
         duel_type = rng.choices(["dribble","pass","shoot","penalty"], weights=[0.35,0.25,0.30,0.10])[0]
 
-        # wybór graczy i akcji
         if duel_type == "penalty":
             attacker = _pick_attacker(att, rng)
-            if attacker.pos == "DEF":
-                attacker = _pick_attacker(att, rng)
+            if attacker.pos == "DEF": attacker = _pick_attacker(att, rng)
             gk = _pick_gk(deff)
-            a_attrs = _synth_attrs(att, attacker); d_attrs = _synth_attrs(deff, gk)
             a_act = rng.choice(["penalty_left","penalty_right","penalty_center"])
             d_act = rng.choice(["gk_dive_left","gk_dive_right","gk_stay"])
             header = f"🎮 LIVE DUEL: karny — {attacker.name} vs {gk.name} ({a_act} vs {d_act})"
-            defender_name = gk.name
+            log.append(_fmt(minute, att.name, header))
+            res = DuelSystem.resolve({"name": attacker.name}, {"name": gk.name}, a_act, d_act, rng=rng)
+            # drain za ciężki sprint/nerwy
+            _drain(stamA if attA else stamB, [attacker.name], FAT_DUEL_BONUS)
+            _drain(stamB if attA else stamA, [gk.name], FAT_DUEL_BONUS*0.7)
         else:
             attacker = _pick_attacker(att, rng)
             defender = _pick_gk(deff) if duel_type == "shoot" and rng.random() < 0.8 else _pick_attacker(deff, rng)
-            a_attrs = _synth_attrs(att, attacker); d_attrs = _synth_attrs(deff, defender)
             if duel_type == "dribble":
                 a_act = "dribble"; d_act = rng.choices(["press","tackle","block"], weights=[0.4,0.4,0.2])[0]
             elif duel_type == "pass":
@@ -476,14 +496,15 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
             else:
                 a_act = "shoot"; d_act = rng.choices(["gk_close","gk_stay","gk_block"], weights=[0.5,0.3,0.2])[0]
             header = f"🎮 LIVE DUEL: {attacker.name} vs {defender.name} ({a_act} vs {d_act})"
-            defender_name = defender.name
+            log.append(_fmt(minute, att.name, header))
+            res = DuelSystem.resolve({"name": attacker.name}, {"name": defender.name}, a_act, d_act, rng=rng)
+            # drain dla uczestników
+            _drain(stamA if attA else stamB, [attacker.name], FAT_DUEL_BONUS)
+            _drain(stamB if attA else stamA, [defender.name], FAT_DUEL_BONUS*0.8)
 
-        log.append(_fmt(minute, att.name, header))
-        res = DuelSystem.resolve(a_attrs, d_attrs, a_act, d_act, rng=rng)
         for c in res.get("commentary", []):
             log.append(_fmt(minute, att.name, c + " (LIVE DUEL)"))
 
-        # statystyki i xG
         oc = res.get("outcome")
         i = 0 if attA else 1
         if oc in ("goal","shot_saved","shot_wide"):
@@ -494,8 +515,14 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
             on_target[i] += 1
             _bump(pstatsA if i==0 else pstatsB, attacker.name, "on_target", 1)
             if oc == "shot_saved" and ("gk" in d_act or duel_type=="penalty"):
-                _bump(pstatsB if i==0 else pstatsA, defender_name, "saves", 1)
-
+                # FIX: poprawne zliczanie interwencji GK (karny vs 1v1)
+                save_name = None
+                if duel_type == "penalty":
+                    save_name = gk.name
+                elif "gk" in d_act:
+                    save_name = defender.name
+                if save_name:
+                    _bump(pstatsB if i==0 else pstatsA, save_name, "saves", 1)
         if oc == "goal":
             score[i] += 1
             _bump(pstatsA if i==0 else pstatsB, attacker.name, "goals", 1)
@@ -504,11 +531,11 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
         elif oc in ("breakthrough","key_pass"):
             _bump(pstatsA if i==0 else pstatsB, attacker.name, "duel_plus", 0.5)
         elif oc in ("intercept","shot_saved"):
-            _bump(pstatsB if i==0 else pstatsA, defender_name, "duel_plus", 0.5)
+            _bump(pstatsB if i==0 else pstatsA, defender.name, "duel_plus", 0.5)
         elif oc in ("lost","shot_wide"):
             _bump(pstatsA if i==0 else pstatsB, attacker.name, "duel_minus", 0.5)
         elif oc == "foul":
-            _bump(pstatsB if i==0 else pstatsA, defender_name, "fouls", 1)
+            _bump(pstatsB if i==0 else pstatsA, defender.name, "fouls", 1)
 
         return True
 
@@ -525,7 +552,16 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                 extra = vm - HALF_VMINUTES
                 minute_real = (45 if first_half else 90) + extra
 
-            controlA = _control_share_eff(teamA, teamB, mod[0], mod[1])
+            # bazowy drain stamina (wszyscy) – zależny od stylu
+            _drain_base(stamA, teamA.tactic.style, posA)
+            _drain_base(stamB, teamB.tactic.style, posB)
+
+            # kontrola gry z poprawką na zmęczenie linii środka
+            base_ctrlA = _control_share_eff(teamA, teamB, mod[0], mod[1])
+            midA = _avg_stam(stamA, posA, "MID"); midB = _avg_stam(stamB, posB, "MID")
+            fA = 0.9 + 0.2*(midA/100.0); fB = 0.9 + 0.2*(midB/100.0)
+            adjA = base_ctrlA * fA; adjB = (1.0-base_ctrlA) * fB
+            controlA = adjA / max(adjA+adjB, 1e-6)
 
             for _ in range(MAX_ACTIONS_PER_MIN):
                 # posiadanie (tick)
@@ -549,13 +585,18 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                 idx = 0 if attA else 1
                 opp = 1 - idx
 
-                # szanse
+                # szanse bazowe
                 p_sh = _p_shot(att, deff)
                 p_gl = _p_goal(att, deff)
+
+                # engagement
                 p_action, p_sh, p_gl = _apply_engagement(idx, minute_real, p_action, p_sh, p_gl)
+                # fatigue
+                p_action, p_sh, p_gl = _apply_fatigue_effects(idx, p_action, p_sh, p_gl)
 
                 # anti-zero
-                if minute_real >= ANTI_ZERO_MINUTE and score[idx] < score[opp] and shots[idx] == 0 and not anti_zero_used[idx]:
+                shots_team = shots[idx]
+                if minute_real >= ANTI_ZERO_MINUTE and score[idx] < score[opp] and shots_team == 0 and not anti_zero_used[idx]:
                     p_sh *= ANTI_ZERO_BOOST
 
                 p_sh = max(0.15, min(0.90, p_sh))
@@ -566,22 +607,26 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
 
                 sp_kind = None
 
-                # FAUL?
-                if rng.random() < FOUL_RATE:
-                    def_fouls = rng.random() < FOUL_DEFENDERS_BIAS
-                    fouler_idx = opp if def_fouls else idx
+                # FAUL? (rośnie przy niskiej średniej stamina broniących)
+                foul_rate_eff = FOUL_RATE
+                def_avg = _avg_stam(stamB, posB) if idx == 0 else _avg_stam(stamA, posA)
+                if def_avg < FAT_LOW_THRESHOLD:
+                    foul_rate_eff *= (1.0 + (FAT_LOW_THRESHOLD - def_avg) / FAT_LOW_THRESHOLD * FAT_LOW_FOUL_BOOST)
+
+                if rng.random() < foul_rate_eff:
+                    fouler_idx = opp if rng.random() < FOUL_DEFENDERS_BIAS else idx
                     fouls_t[fouler_idx] += 1
                     foul_team = teamA.name if fouler_idx == 0 else teamB.name
 
-                    # przypisz winnego
-                    if def_fouls:
-                        pool = [p for p in (teamB.players if idx==0 else teamA.players) if p.pos in ("DEF","MID")] or (teamB.players if idx==0 else teamA.players)
-                        fouler = rng.choice(pool)
-                        _bump(pstatsB if idx==0 else pstatsA, fouler.name, "fouls", 1)
-                    else:
-                        pool = [p for p in (teamA.players if idx==0 else teamB.players) if p.pos in ("FWD","MID")] or (teamA.players if idx==0 else teamB.players)
-                        fouler = rng.choice(pool)
-                        _bump(pstatsA if idx==0 else pstatsB, fouler.name, "fouls", 1)
+                    pool = (teamB.players if idx==0 else teamA.players) if fouler_idx==opp else (teamA.players if idx==0 else teamB.players)
+                    if fouler_idx == opp:  # najczęściej DEF/MID
+                        cands = [p for p in pool if p.pos in ("DEF","MID")] or pool
+                    else:                  # czasem fauluje atakujący
+                        cands = [p for p in pool if p.pos in ("FWD","MID")] or pool
+                    fouler = rng.choice(cands)
+                    _bump(pstatsA if fouler_idx==0 else pstatsB, fouler.name, "fouls", 1)
+                    # zmęczenie też gra rolę – faulujący traci trochę
+                    (_drain(stamA, [fouler.name], 1.0) if fouler_idx==0 else _drain(stamB, [fouler.name], 1.0))
 
                     log.append(_fmt(minute, foul_team, "✋ Faul"))
 
@@ -596,7 +641,8 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                         log.append(_fmt(minute, foul_team, "🟨 Żółta kartka"))
 
                     sp_kind = "freekick"
-                    if not def_fouls:
+                    if fouler_idx == idx:
+                        # po faulu atakującego – piłka dla przeciwnika
                         att, deff = deff, att
                         idx, opp = opp, idx
                     log.append(_fmt(minute, att.name, "🎯 Rzut wolny"))
@@ -618,6 +664,9 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                     if shooter.pos == "GK": shooter = _pick_attacker(att, rng)
                     _bump(pstatsA if idx==0 else pstatsB, shooter.name, "shots", 1)
 
+                    # koszt zmęczenia za udział w akcji
+                    (_drain(stamA, [shooter.name], FAT_EVENT_BONUS) if idx==0 else _drain(stamB, [shooter.name], FAT_EVENT_BONUS))
+
                     # xG dla strzału (SFG lekki bonus)
                     shot_xg = p_gl * (1.10 if sp_kind == "freekick" else (1.05 if sp_kind == "corner" else 1.00))
                     xg[idx] += float(max(0.01, min(0.95, shot_xg)))
@@ -629,7 +678,10 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                         assister = None
                         if rng.random() < 0.70:
                             assister = _pick_assister(att, shooter, rng)
-                            if assister: _bump(pstatsA if idx==0 else pstatsB, assister.name, "assists", 1)
+                            if assister:
+                                _bump(pstatsA if idx==0 else pstatsB, assister.name, "assists", 1)
+                                # asystent też się zmęczył
+                                (_drain(stamA, [assister.name], FAT_EVENT_BONUS*0.6) if idx==0 else _drain(stamB, [assister.name], FAT_EVENT_BONUS*0.6))
                         tag = "po rzucie rożnym" if sp_kind == "corner" else ("po rzucie wolnym" if sp_kind == "freekick" else "z akcji")
                         _add_goal_line(minute, att.name, idx, sp_tag=f"  ({tag})", shooter=shooter.name, assister=(assister.name if assister else None))
                     else:
@@ -638,6 +690,8 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
                             _bump(pstatsA if idx==0 else pstatsB, shooter.name, "on_target", 1)
                             gk = _pick_gk(deff)
                             _bump(pstatsB if idx==0 else pstatsA, gk.name, "saves", 1)
+                            # GK też pracuje
+                            (_drain(stamB, [gk.name], FAT_EVENT_BONUS*0.5) if idx==0 else _drain(stamA, [gk.name], FAT_EVENT_BONUS*0.5))
                             rtxt = comments.pick("shot_saved", team=att.name, minute=minute)
                         else:
                             rtxt = comments.pick("shot_off", team=att.name, minute=minute)
@@ -663,19 +717,28 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
         return add
 
     add1 = sim_half(first_half=True)
+    avgA_ht = round(_avg_stam(stamA, posA))
+    avgB_ht = round(_avg_stam(stamB, posB))
     log.append(f"HT • Przerwa ({score[0]}:{score[1]}). Doliczono +{add1}'.")
+    log.append(f"🔋 Śr. stamina do przerwy: {teamA.name} {avgA_ht}% – {teamB.name} {avgB_ht}%")
+
     add2 = sim_half(first_half=False)
     log.append(f"FT • Koniec ({score[0]}:{score[1]}). Doliczono +{add2}'.")
 
     # Posiadanie %
     total_ticks = max(1e-6, pos_ticks[0] + pos_ticks[1])
-    posA = int(round(100.0 * pos_ticks[0] / total_ticks))
-    posB = 100 - posA
+    posA_share = int(round(100.0 * pos_ticks[0] / total_ticks))
+    posB_share = 100 - posA_share
 
     # xG podsumowanie
     xgA, xgB = round(xg[0], 2), round(xg[1], 2)
     log.append(f"📊 xG: {teamA.name} {xgA:.2f} – {teamB.name} {xgB:.2f}")
-    log.append(f"🔁 Posiadanie: {teamA.name} {posA}% – {teamB.name} {posB}%")
+    log.append(f"🔁 Posiadanie: {teamA.name} {posA_share}% – {teamB.name} {posB_share}%")
+
+    # stamina końcowa (debug/immersja)
+    avgA_ft = round(_avg_stam(stamA, posA))
+    avgB_ft = round(_avg_stam(stamB, posB))
+    log.append(f"🔋 Śr. stamina koniec: {teamA.name} {avgA_ft}% – {teamB.name} {avgB_ft}%")
 
     # Oceny
     ratingsA = _compute_ratings(teamA, pstatsA, goals_conceded=score[1])
@@ -696,7 +759,6 @@ def simulate(teamA: TeamCtx, teamB: TeamCtx, seed: int | None = None) -> Dict[st
         "fouls": {"A": fouls_t[0], "B": fouls_t[1]},
         "cards": {"A": {"yellow": yc_t[0], "red": rc_t[0]}, "B": {"yellow": yc_t[1], "red": rc_t[1]}},
         "xg": {"A": xgA, "B": xgB},
-        "possession": {"A": posA, "B": posB},
+        "possession": {"A": posA_share, "B": posB_share},
         "seed": seed,
-        "ratings": { "A": ratingsA, "B": ratingsB },
     }
