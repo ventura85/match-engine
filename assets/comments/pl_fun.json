@@ -21,7 +21,6 @@
     "Klepa przy linii – sprytne granie.",
     "Cierpliwie – kontrola rytmu."
   ],
-
   "shot_saved": [
     "🧤 Golkiper z klasą – broni pewnie!",
     "🧤 Kapitalna parada! Strzał zatrzymany.",
@@ -32,7 +31,6 @@
     "🧤 Instynktownie nogą – niewiarygodna obrona!",
     "🧤 Wyciąga to z okienka – cudowna parada."
   ],
-
   "shot_off": [
     "❌ Minimalnie obok dalszego słupka.",
     "❌ Piłka przelatuje nad poprzeczką.",
@@ -40,9 +38,8 @@
     "❌ Uderzenie 'na pamięć' – daleko od bramki.",
     "❌ Pół metra obok – szkoda!",
     "❌ Nieczysto trafione – bez zagrożenia.",
-    "❌ Lekko mu „zjechała” – bez historii."
+    "❌ Lekko mu 'zjechała' – bez historii."
   ],
-
   "clearance": [
     "Na oślep byle dalej – i jest oddech.",
     "Mocnym wybiciem resetują akcję.",
@@ -51,14 +48,12 @@
     "Wyjaśniają sytuację, daleko od pola karnego.",
     "Wspólna asekuracja – zamykają korytarze."
   ],
-
   "throw_in": [
     "Wrzut z autu do środkowej strefy – utrzymują.",
     "Aut na wysokości pola karnego – szybko wznawiają.",
     "Daleki wrzut z autu, robi się zamieszanie!",
     "Krótko z autu i gra od nowa."
   ],
-
   "corner_wasted": [
     "Krótki róg nie wyszedł – strata przewagi.",
     "Zbyt płaskie dośrodkowanie – wybijają.",
@@ -67,7 +62,6 @@
     "Zagrali schemat, ale bez skutku.",
     "Pierwszy słupek zamknięty – nic z tego."
   ],
-
   "goal": [
     "⚽ Huknął bez przyjęcia – nie do obrony!",
     "⚽ Precyzyjnie przy słupku – stadiony świata!",
@@ -76,11 +70,9 @@
     "⚽ Strzał z pierwszej piłki – idealne dogranie!",
     "⚽ Piękna akcja i chłodne wykończenie!"
   ],
-
-  // Dodatkowe klucze pod przyszłe użycie (silnik może je ignorować do czasu patcha):
   "goal_corner": [
     "⚽ Po rogu – zamieszanie i piłka wpada!",
-    "⚽ „Druga piłka” po kornerze i do siatki!",
+    "⚽ 'Druga piłka' po kornerze i do siatki!",
     "⚽ Główka po dośrodkowaniu z rogu – gol!"
   ],
   "goal_freekick": [
