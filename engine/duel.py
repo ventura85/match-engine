@@ -212,4 +212,62 @@ class DuelSystem:
     def resolve(attacker: Any, defender: Any, act_att: str, act_def: str, rng: Optional[random.Random]=None) -> Dict[str, Any]:
         return resolve_duel(attacker, defender, act_att, act_def, rng=rng)
 
+    # Adapter for MatchEngine: picks random actions and normalizes result.
+    def resolve_random_duel(self, attacker: Any, defender: Any, *_teams) -> Dict[str, Any]:
+        # Użyj globalnego RNG (deterministyczny po set_random_seed)
+        rng = random
+
+        def _flat(p: Any) -> Dict[str, float]:
+            try:
+                attrs = getattr(p, 'attributes', {}) or {}
+                phys = attrs.get('physical', {}) or {}
+                tech = attrs.get('technical', {}) or {}
+                ment = attrs.get('mental', {}) or {}
+                # Provide a flat dict with sensible fallbacks
+                def get(cat, key, default=60.0):
+                    return float(cat.get(key, default))
+                return {
+                    'dribbling':    get(tech, 'dribbling'),
+                    'passing':      get(tech, 'passing'),
+                    'shooting':     get(tech, 'shooting'),
+                    'tackling':     get(tech, 'tackling'),
+                    'marking':      get(tech, 'marking'),
+                    'reflexes':     get(tech, 'reflexes'),
+                    'handling':     get(tech, 'handling'),
+                    'speed':        get(phys, 'speed'),
+                    'strength':     get(phys, 'strength'),
+                    'stamina':      get(phys, 'stamina', 80.0),
+                    'positioning':  get(ment, 'positioning'),
+                    'concentration':get(ment, 'concentration'),
+                    'decisions':    get(ment, 'decisions'),
+                    'name':         getattr(p, 'name', getattr(p, 'id', '')),
+                }
+            except Exception:
+                # Assume already flat-ish mapping
+                return dict(p)
+
+        # Choose actions with a simple heuristic
+        att_action = rng.choices(['dribble', 'pass', 'shoot'], weights=[0.35, 0.35, 0.30])[0]
+        # GK-specific actions only for shots; otherwise defend with field actions
+        if att_action == 'shoot':
+            def_action = rng.choices(['gk_close', 'gk_block', 'gk_stay', 'press', 'block', 'tackle'], weights=[0.25,0.20,0.15,0.15,0.15,0.10])[0]
+        else:
+            def_action = rng.choices(['press', 'tackle', 'block'], weights=[0.5, 0.35, 0.15])[0]
+
+        res = resolve_duel(_flat(attacker), _flat(defender), att_action, def_action, rng=rng)
+
+        # Normalize to what MatchEngine expects
+        outcome = res.get('outcome')
+        if outcome in ('goal', 'shot_saved', 'shot_wide'):
+            norm = {'type': 'shot', 'outcome': 'shot', 'detail': ' '.join(res.get('commentary', []) or [])}
+        elif outcome in ('breakthrough', 'key_pass'):
+            norm = {'type': 'action', 'outcome': 'win', 'detail': ' '.join(res.get('commentary', []) or [])}
+        elif outcome in ('intercept', 'lost'):
+            norm = {'type': 'action', 'outcome': 'lose', 'detail': ' '.join(res.get('commentary', []) or [])}
+        elif outcome == 'foul':
+            norm = {'type': 'foul', 'outcome': 'lose', 'detail': 'Faul w pojedynku.'}
+        else:
+            norm = {'type': 'action', 'outcome': 'lose', 'detail': ''}
+        return norm
+
 __all__ = ["resolve_duel", "DuelSystem", "ACTIONS_ATTACK", "ACTIONS_DEFENCE"]

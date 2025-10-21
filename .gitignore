@@ -33,3 +33,9 @@ replit.md
 
 # Other
 *.log
+
+# Project docs (local only)
+assets/Gra piłkarska.docx
+
+# Reports / generated stats
+reports/

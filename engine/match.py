@@ -9,26 +9,27 @@ from models.player import Player
 from engine.duel import DuelSystem
 from engine.utils import calculate_team_strength
 from engine.comments import Commentary as C
+from engine.comments_adapter import Comments as CA
 
-# Tempo
-DEFAULT_REAL_MINUTES = 2
+# Tempo: 90 minut gry (generowane natychmiast). Real-time możliwy w przyszłości.
+DEFAULT_REAL_MINUTES = 20
 TOTAL_SIM_MINUTES = 90
 HALF_SIM_MINUTES = 45
 
-# Parametry zdarzeń
-BASE_SHOT_PROB = 0.20
-STYLE_ATK_SHOT_BONUS = 0.08
-STYLE_DEF_SHOT_MALUS = 0.05
-WINGS_SHOT_BONUS = 0.02
+# Parametry zdarzeń (kalibracja v1)
+BASE_SHOT_PROB = 0.165
+STYLE_ATK_SHOT_BONUS = 0.035
+STYLE_DEF_SHOT_MALUS = 0.025
+WINGS_SHOT_BONUS = 0.012
 
-SAVE_TO_CORNER_PROB = 0.45
-BLOCK_TO_CORNER_PROB = 0.30
+SAVE_TO_CORNER_PROB = 0.30
+BLOCK_TO_CORNER_PROB = 0.22
 
-FOUL_PROB_PER_MIN = 0.08
-STYLE_DEF_FOUL_BONUS = 0.02
-YELLOW_PROB = 0.28
+FOUL_PROB_PER_MIN = 0.16
+STYLE_DEF_FOUL_BONUS = 0.03
+YELLOW_PROB = 0.34
 SECOND_YELLOW_TO_RED_PROB = 0.25
-DIRECT_RED_PROB = 0.04
+DIRECT_RED_PROB = 0.03
 
 FREEKICK_GOAL_BASE = 0.07
 PENALTY_PROB = 0.15
@@ -98,6 +99,8 @@ class MatchEngine:
         self.events: List[Dict] = []
         self.stats = MatchStats()
         self.duel = DuelSystem()
+        # Komentarze makro (dłuższe, rzadsze)
+        self.cadv = CA()
 
         self.duel_minutes_h1 = self._pick_duel_minutes(half=1, count=DUELS_PER_HALF)
         self.duel_minutes_h2 = self._pick_duel_minutes(half=2, count=DUELS_PER_HALF)
@@ -114,6 +117,10 @@ class MatchEngine:
 
         # BLOKADA: max 1 gol w danej minucie, niezależnie od ścieżki (akcja/SFG/pojedynki)
         self._minute_goal_lock: set[int] = set()
+        # Makro‑narracje: cele i harmonogram
+        self._macro_emitted = 0
+        self._macro_target = {"low": 2, "med": 3, "high": 4}.get(self.density, 3)
+        self._macro_next = 2
 
     # API
     def simulate_match(self) -> Dict:
@@ -149,15 +156,15 @@ class MatchEngine:
                     time.sleep(self.seconds_per_sim_minute)
 
         self._log_banner("🏁 KONIEC MECZU!")
-        self._add_event(90 + added, "", "final_whistle", C.final_whistle())
+        # można dodać final_whistle jako event, ale raport i tak zawiera koniec meczu
         if self.verbose:
             print(C.final_whistle())
         return self._generate_report()
 
     # minuta meczu
     def _simulate_minute(self, half: int, minute: int) -> None:
-        ctrl_a = self.strength_a["control"] * self._style_control_factor(self.team_a.style)
-        ctrl_b = self.strength_b["control"] * self._style_control_factor(self.team_b.style)
+        ctrl_a = self.strength_a["control"] * self._style_control_factor(self.team_a.style) * self._control_modifier(self.team_a)
+        ctrl_b = self.strength_b["control"] * self._style_control_factor(self.team_b.style) * self._control_modifier(self.team_b)
         team_in_possession = self.team_a if (random.random() < (ctrl_a / max(0.0001, ctrl_a + ctrl_b))) else self.team_b
         defending_team = self.team_b if team_in_possession is self.team_a else self.team_a
 
@@ -170,22 +177,25 @@ class MatchEngine:
         if (half == 1 and minute in self.duel_minutes_h1) or (half == 2 and minute in self.duel_minutes_h2):
             self._simulate_duel(half, minute, team_in_possession)
             self._maybe_micro(minute, team_in_possession, defending_team)
+            self._maybe_macro(minute, team_in_possession, defending_team)
             return
 
         if self._minute_foul_occurs(team_in_possession):
             self._simulate_foul(half, minute, team_in_possession)
             self._maybe_micro(minute, team_in_possession, defending_team)
+            self._maybe_macro(minute, team_in_possession, defending_team)
             return
 
         self._simulate_action(half, minute, team_in_possession)
         self._maybe_micro(minute, team_in_possession, defending_team)
+        self._maybe_macro(minute, team_in_possession, defending_team)
 
     def _simulate_action(self, half: int, minute: int, attacking_team: Team) -> None:
         defending_team = self.team_b if attacking_team is self.team_a else self.team_a
         atk = self._team_attack_value(attacking_team, minute)
         defv = self._team_defense_value(defending_team, minute)
 
-        p_shot = self._prob_shot(attacking_team)
+        p_shot = self._prob_shot(attacking_team, defending_team)
         p_on = self._prob_shot_on_target(atk, defv)
 
         if random.random() < p_shot:
@@ -211,13 +221,15 @@ class MatchEngine:
                     self._h2_stoppages += 1.0
             else:
                 if on_target:
-                    if random.random() < SAVE_TO_CORNER_PROB:
+                    corner_factor = 0.6 if getattr(self, "_prev_event_type", None) == "corner" and getattr(self, "_prev_event_min", -1) == minute else 1.0
+                    if random.random() < (SAVE_TO_CORNER_PROB * corner_factor):
                         self._register_corner(minute, attacking_team, text=C.corner_parried(shooter, attacking_team, defending_team))
                     else:
                         self._add_event(minute, attacking_team.name, "shot_on_target",
                                         f"{minute}' - 🧤 {C.shot_on_target(shooter, attacking_team, defending_team)}")
                 else:
-                    if random.random() < BLOCK_TO_CORNER_PROB:
+                    corner_factor = 0.6 if getattr(self, "_prev_event_type", None) == "corner" and getattr(self, "_prev_event_min", -1) == minute else 1.0
+                    if random.random() < (BLOCK_TO_CORNER_PROB * corner_factor):
                         self._register_corner(minute, attacking_team, text=C.corner_blocked(shooter, attacking_team, defending_team))
                     else:
                         self._add_event(minute, attacking_team.name, "shot_off_target",
@@ -250,8 +262,8 @@ class MatchEngine:
                 self.stats.shots_b += 1; self.stats.shots_on_b += 1
 
             gk_overall = self._keeper_overall(defending_team)
-            att_power = self._team_attack_value(attacking_team, minute) * 1.08
-            goal_prob = self._prob_goal(att_power, gk_overall) * 1.12
+            att_power = self._team_attack_value(attacking_team, minute) * 1.00
+            goal_prob = self._prob_goal(att_power, gk_overall) * 1.00
 
             if (random.random() < goal_prob) and (minute not in self._minute_goal_lock):
                 assist = self._maybe_assist(attacking_team, prefer=att_player)
@@ -294,11 +306,44 @@ class MatchEngine:
                 txt = C.micro_clearance(att, defe)
             self._add_event(minute, att.name, "micro", f"{minute}' - {txt}")
 
+    # Makro‑narracje (rzadziej, dłuższe wpisy)
+    def _maybe_macro(self, minute: int, att: Team, defe: Team) -> None:
+        if self._macro_emitted >= self._macro_target:
+            return
+        if minute < self._macro_next:
+            return
+        # Heurystyki wyboru rodzaju narracji
+        if minute in (HALF_SIM_MINUTES - 1, HALF_SIM_MINUTES, TOTAL_SIM_MINUTES - 1, TOTAL_SIM_MINUTES):
+            kind = "endgame"
+        else:
+            r = random.random()
+            if r < 0.35:
+                kind = "pressure"
+            elif r < 0.65:
+                kind = "momentum"
+            elif r < 0.85:
+                kind = "macro_build"
+            else:
+                kind = "calm"
+        text = self.cadv.macro(kind, team=att.name, minute=str(minute))
+        self._add_event(minute, att.name, "narration", f"{minute}' - {text}")
+        self._macro_emitted += 1
+        # Zaplanuj następną narrację za 2–3 minuty
+        self._macro_next = minute + random.randint(2, 3)
+
     # Faule / SFG / kartki
     def _minute_foul_occurs(self, attacking_team: Team) -> bool:
         defending = self.team_b if attacking_team is self.team_a else self.team_a
         p = FOUL_PROB_PER_MIN + (STYLE_DEF_FOUL_BONUS if (defending.style or '').lower() == 'defensive' else 0.0)
-        return random.random() < max(0.0, min(0.30, p))
+        try:
+            p_def = defending.pressing_level()
+        except Exception:
+            p_def = 0
+        if p_def > 0:
+            p += 0.02
+        elif p_def < 0:
+            p -= 0.015
+        return random.random() < max(0.0, min(0.35, p))
 
     def _simulate_foul(self, half: int, minute: int, attacking_team: Team) -> None:
         defending_team = self.team_b if attacking_team is self.team_a else self.team_a
@@ -413,10 +458,10 @@ class MatchEngine:
         assist_txt = f" (asysta: {assist})" if assist else ""
         if context == "penalty":
             desc = f"{minute}' - ⚽ GOL! {team.name}! Strzelec: {scorer}{assist_txt} — {C.penalty_goal(scorer, team)}{extra_txt}"
-            self._add_event(minute, team.name, "goal_penalty", desc)
+            self._add_event(minute, team.name, "goal", desc)
         elif context == "freekick":
             desc = f"{minute}' - ⚽ GOL! {team.name}! Strzelec: {scorer}{assist_txt} — {C.freekick_goal(scorer, team)}{extra_txt}"
-            self._add_event(minute, team.name, "goal_freekick", desc)
+            self._add_event(minute, team.name, "goal", desc)
         else:
             self._add_event(minute, team.name, "goal", f"{minute}' - ⚽ GOL! {team.name}! Strzelec: {scorer}{assist_txt}")
 
@@ -424,13 +469,43 @@ class MatchEngine:
         total_ticks = max(1, self.stats.pos_a_ticks + self.stats.pos_b_ticks)
         pos_a = round(100.0 * self.stats.pos_a_ticks / total_ticks, 1)
         pos_b = round(100.0 * self.stats.pos_b_ticks / total_ticks, 1)
+
+        # Pełen timeline 1..90+ do CLI
+        events_full = [e for e in self.events if int(e.get("minute", 0)) >= 1]
+        # Kompresja 1..90 -> 1..10 dla testów (report['events'])
+        def _compress_minute(m: int) -> int:
+            if m < 1:
+                return 1
+            return min(10, int((m - 1) * 10 / 90) + 1)
+        timeline = []
+        for e in events_full:
+            ee = dict(e)
+            ee["minute"] = _compress_minute(int(e.get("minute", 1)))
+            timeline.append(ee)
+
+        score_a = len(self.stats.goals_a)
+        score_b = len(self.stats.goals_b)
+        goals_combined = (
+            [{"team": self.team_a.name, "minute": m, "scorer": s, "assist": a} for (m, s, a) in self.stats.goals_a]
+            + [{"team": self.team_b.name, "minute": m, "scorer": s, "assist": a} for (m, s, a) in self.stats.goals_b]
+        )
+
         return {
             "team_a": self.team_a.name,
             "team_b": self.team_b.name,
-            "score_a": len(self.stats.goals_a),
-            "score_b": len(self.stats.goals_b),
-            "goals_a": [{"minute": m, "scorer": s, "assist": a} for (m, s, a) in self.stats.goals_a],
-            "goals_b": [{"minute": m, "scorer": s, "assist": a} for (m, s, a) in self.stats.goals_b],
+            "score": (score_a, score_b),
+            "possession": {self.team_a.name: pos_a, self.team_b.name: pos_b},
+            "shots": {self.team_a.name: self.stats.shots_a, self.team_b.name: self.stats.shots_b},
+            "shots_on_target": {self.team_a.name: self.stats.shots_on_a, self.team_b.name: self.stats.shots_on_b},
+            "events": timeline,
+            "events_full": events_full,
+            "goals": goals_combined,
+            "substitutions": [],
+            "tactical_impact": {
+                "team_a_style": getattr(self.team_a, "style", "balanced"),
+                "team_b_style": getattr(self.team_b, "style", "balanced"),
+            },
+            # Rich stats (zachowane do UI)
             "stats": {
                 "possession_a": pos_a, "possession_b": pos_b,
                 "shots_a": self.stats.shots_a, "shots_on_a": self.stats.shots_on_a,
@@ -443,12 +518,19 @@ class MatchEngine:
                 "freekicks_a": self.stats.freekicks_a, "freekicks_b": self.stats.freekicks_b,
                 "penalties_a": self.stats.penalties_a, "penalties_b": self.stats.penalties_b
             },
-            "events": self.events
+            # Backward-compat dla istniejących wypisów
+            "score_a": score_a,
+            "score_b": score_b,
+            "goals_a": [{"minute": m, "scorer": s, "assist": a} for (m, s, a) in self.stats.goals_a],
+            "goals_b": [{"minute": m, "scorer": s, "assist": a} for (m, s, a) in self.stats.goals_b],
         }
 
     # Utils: logi
     def _add_event(self, minute: int, team: str, event_type: str, description: str) -> None:
         self.events.append({"minute": minute, "team": team, "event_type": event_type, "description": description})
+        # śledzenie poprzedniego eventu (anty‑karuzela rzutów rożnych)
+        self._prev_event_type = event_type
+        self._prev_event_min = minute
         if self.verbose and description:
             print(description)
 
@@ -467,23 +549,48 @@ class MatchEngine:
     # Heurystyki
     def _style_control_factor(self, style: str) -> float:
         style = (style or "").lower()
-        if style == "attacking": return 1.05
-        if style == "defensive": return 0.95
+        if style == "attacking": return 1.03
+        if style == "defensive": return 0.98
         return 1.0
+
+    def _control_modifier(self, team: Team) -> float:
+        p_lvl = 0
+        try:
+            p_lvl = team.pressing_level()
+        except Exception:
+            pass
+        if p_lvl > 0:
+            press_factor = 0.98
+        elif p_lvl < 0:
+            press_factor = 1.02
+        else:
+            press_factor = 1.0
+        w_lvl = 0
+        try:
+            w_lvl = team.width_level()
+        except Exception:
+            pass
+        if w_lvl > 0:
+            width_factor = 0.99
+        elif w_lvl < 0:
+            width_factor = 1.01
+        else:
+            width_factor = 1.0
+        return press_factor * width_factor
 
     def _team_attack_value(self, team: Team, minute: int) -> float:
         base = self.strength_a["attack"] if team is self.team_a else self.strength_b["attack"]
         style = (team.style or "").lower()
-        if style == "attacking": base *= 1.1
-        elif style == "defensive": base *= 0.9
+        if style == "attacking": base *= 1.05
+        elif style == "defensive": base *= 0.97
         if self._team_has_active_buff(team, minute): base *= 1.0 + BUFF_PERCENT
         return base
 
     def _team_defense_value(self, team: Team, minute: int) -> float:
         base = self.strength_a["defense"] if team is self.team_a else self.strength_b["defense"]
         style = (team.style or "").lower()
-        if style == "defensive": base *= 1.05
-        elif style == "attacking": base *= 0.95
+        if style == "defensive": base *= 1.07
+        elif style == "attacking": base *= 0.98
         if self._team_has_active_buff(team, minute): base *= 1.0 + BUFF_PERCENT * 0.5
         return base
 
@@ -522,27 +629,53 @@ class MatchEngine:
             if candidates: return random.choice(candidates).name
         return None
 
-    def _prob_shot(self, team: Team) -> float:
+    def _prob_shot(self, team: Team, defending_team: Optional[Team] = None) -> float:
         base = BASE_SHOT_PROB
         style = (team.style or "").lower()
         if style == "attacking": base += STYLE_ATK_SHOT_BONUS
         elif style == "defensive": base -= STYLE_DEF_SHOT_MALUS
-        if (team.attack_channel or "").lower() == "wings": base += WINGS_SHOT_BONUS
-        return max(0.05, min(0.50, base))
+        ch = (team.attack_channel or "").lower()
+        if ch == "wings": base += WINGS_SHOT_BONUS
+        # Width synergy
+        try:
+            w = team.width_level()
+        except Exception:
+            w = 0
+        if w > 0:
+            if ch == "wings": base += 0.012
+            elif ch == "center": base -= 0.008
+        elif w < 0:
+            if ch == "center": base += 0.012
+            elif ch == "wings": base -= 0.008
+        # Pressing effects
+        try:
+            p_att = team.pressing_level()
+        except Exception:
+            p_att = 0
+        if p_att > 0: base *= 1.04
+        elif p_att < 0: base *= 0.96
+        if defending_team is not None:
+            try:
+                p_def = defending_team.pressing_level()
+            except Exception:
+                p_def = 0
+            if p_def > 0: base *= 0.97
+            elif p_def < 0: base *= 1.02
+        return max(0.05, min(0.60, base))
 
     def _prob_shot_on_target(self, atk: float, defv: float) -> float:
         ratio = atk / max(1.0, defv)
-        base = 0.35 * min(1.5, ratio)
-        return max(0.15, min(0.65, base))
+        base = 0.25 * min(1.5, ratio)
+        return max(0.12, min(0.55, base))
 
     def _prob_goal(self, shot_power: float, keeper_ovr: float) -> float:
         ratio = shot_power / max(1.0, keeper_ovr)
-        base = 0.25 * min(1.6, ratio)
-        return max(0.05, min(0.50, base))
+        base = 0.18 * min(1.6, ratio)
+        return max(0.04, min(0.35, base))
 
     def _pick_duel_minutes(self, half: int, count: int) -> List[int]:
         segments = [(5, 15), (16, 30), (31, 45)] if half == 1 else [(50, 60), (61, 75), (76, 90)]
-        return sorted(random.randint(a, b) for (a, b) in segments[:count])
+        return sorted(random.randint(a, b) for (a, b) in segments[:min(count, len(segments))])
 
     # Przerwa
     def _half_time_adjustments(self) -> None:

@@ -39,7 +39,9 @@ def load_teams() -> Dict[str, Team]:
                     traits=p.get("traits", [])
                 )
             )
-        teams[name] = Team(name=name, players=players, formation=formation, style=style, attack_channel=attack_channel)
+        pressing = t.get("pressing", "normal")
+        width = t.get("width", "normal")
+        teams[name] = Team(name=name, players=players, formation=formation, style=style, attack_channel=attack_channel, pressing=pressing, width=width)
     if not teams:
         print("[BŁĄD] Nie znaleziono żadnych drużyn w teams.json."); sys.exit(1)
     return teams
@@ -110,12 +112,13 @@ def print_match_report(report: Dict) -> None:
         "corner", "penalty_miss", "red_card",
         "stoppage_time", "final_whistle"
     }
-    important = [e for e in report["events"] if e["event_type"] in important_types]
+    events_src = report.get("events_full") or report["events"]
+    important = [e for e in events_src if e["event_type"] in important_types]
     if important:
         print("\n🔥 KLUCZOWE ZDARZENIA:")
         for e in important[:20]:
             print(f"   {e['description']}")
-    timeline = [e for e in report["events"] if e["event_type"] not in ("banner","info")]
+    timeline = [e for e in events_src if e["event_type"] not in ("banner","info")]
     if timeline:
         print("\n📝 CHRONOLOGIA (wycinek):")
         for e in timeline[:120]:

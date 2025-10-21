@@ -21,6 +21,24 @@ class Team:
     formation: str = '4-4-2'
     style: str = 'balanced'  # defensive, balanced, attacking
     attack_channel: str = 'center'  # wings, center
+    pressing: str = 'normal'        # low, normal, high
+    width: str = 'normal'           # narrow, normal, wide
+
+    def pressing_level(self) -> int:
+        p = (self.pressing or 'normal').lower()
+        if p == 'high':
+            return 1
+        if p == 'low':
+            return -1
+        return 0
+
+    def width_level(self) -> int:
+        w = (self.width or 'normal').lower()
+        if w in ('wide', 'wings'):
+            return 1
+        if w in ('narrow', 'narrower'):
+            return -1
+        return 0
     
     def get_attack_rating(self) -> float:
         """
