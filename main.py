@@ -83,7 +83,7 @@ def print_lineups(team_a: Team, team_b: Team) -> None:
     print_team(team_a, "🔴"); print_team(team_b, "🔵")
     print("=" * 80 + "\n")
 
-def print_match_report(report: Dict) -> None:
+def print_match_report(report: Dict, *, timeline_mode: str = "all", timeline_limit: int = 120) -> None:
     print("\n" + "=" * 70)
     print(f"RAPORT Z MECZU: {report['team_a']} vs {report['team_b']}")
     print("=" * 70 + "\n")
@@ -107,6 +107,23 @@ def print_match_report(report: Dict) -> None:
     print(f"\n   Stałe fragmenty:\n      Rogi: {report['team_a']}: {st['corners_a']}  |  {report['team_b']}: {st['corners_b']}\n      Wolne: {report['team_a']}: {st['freekicks_a']}  |  {report['team_b']}: {st['freekicks_b']}\n      Karne: {report['team_a']}: {st['penalties_a']}  |  {report['team_b']}: {st['penalties_b']}")
     print(f"\n   Faule i kartki:\n      Faule: {report['team_a']}: {st['fouls_a']}  |  {report['team_b']}: {st['fouls_b']}\n      Żółte: {report['team_a']}: {st['yellows_a']}  |  {report['team_b']}: {st['yellows_b']}\n      Czerwone: {report['team_a']}: {st['reds_a']}  |  {report['team_b']}: {st['reds_b']}")
 
+    subs = report.get('substitutions') or []
+    if subs:
+        print("\n🔁 ZMIANY:")
+        for s in subs:
+            print(f"   {s['minute']}' {s['team']}: {s['out']} ▶ {s['in']} ({s.get('reason','')})")
+
+    # Dystans – Top 3 per team (jeśli dostępne)
+    pstats = report.get('player_stats') or {}
+    for team_name in (report['team_a'], report['team_b']):
+        plist = pstats.get(team_name) or []
+        if not plist:
+            continue
+        top = sorted(plist, key=lambda x: x.get('distance_km', 0.0), reverse=True)[:3]
+        print(f"\n🏃 DYSTANS – {team_name} (Top 3):")
+        for it in top:
+            print(f"   {it['name']:<22} {it['distance_km']:>4.2f} km | energia {it['energy']:.2f}")
+
     important_types = {
         "goal", "goal_penalty", "goal_freekick",
         "corner", "penalty_miss", "red_card",
@@ -118,10 +135,22 @@ def print_match_report(report: Dict) -> None:
         print("\n🔥 KLUCZOWE ZDARZENIA:")
         for e in important[:20]:
             print(f"   {e['description']}")
+    # Timeline printing according to mode
     timeline = [e for e in events_src if e["event_type"] not in ("banner","info")]
+    if timeline_mode == "key":
+        timeline = [e for e in timeline if e["event_type"] in important_types]
+        title = "CHRONOLOGIA (kluczowe)"
+    elif timeline_mode == "nomicro":
+        timeline = [e for e in timeline if e["event_type"] != "micro"]
+        title = "CHRONOLOGIA (bez mikro)"
+    elif timeline_mode == "last":
+        timeline = timeline[-max(1, int(timeline_limit)):]
+        title = f"CHRONOLOGIA (ostatnie {max(1, int(timeline_limit))})"
+    else:
+        title = "CHRONOLOGIA (pełna)"
     if timeline:
-        print("\n📝 CHRONOLOGIA (wycinek):")
-        for e in timeline[:120]:
+        print(f"\n📝 {title}:")
+        for e in timeline:
             print(f"   {e['description']}")
     print("\n" + "=" * 80 + "\n")
 
@@ -134,6 +163,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--real-time", action="store_true")
     p.add_argument("--real-minutes", type=int, default=DEFAULT_REAL_MINUTES)
     p.add_argument("--density", type=str, default="high", choices=["low","med","high"], help="Gęstość mikro-komentarzy (bez 'ultra').")
+    p.add_argument("--referee", type=str, default="random", choices=["random","lenient","neutral","strict"], help="Profil sędziego: random/lenient/neutral/strict")
+    p.add_argument("--timeline", type=str, default="all", choices=["all","last","key","nomicro"], help="Tryb wyświetlania timeline w CLI")
+    p.add_argument("--timeline-limit", type=int, default=120, help="Limit zdarzeń dla trybu 'last'")
     return p.parse_args()
 
 def main() -> None:
@@ -166,10 +198,17 @@ def main() -> None:
         verbose=bool(args.verbose),
         real_time=bool(args.real_time),
         real_minutes_target=int(args.real_minutes),
-        density=args.density
+        density=args.density,
+        referee_profile=args.referee
     )
+    # Informacja o sędzim (profil)
+    try:
+        ref = engine.referee
+        print(f"Sędzia: {ref.get('label','Neutralny')} (profil: {ref.get('key','neutral')})\n")
+    except Exception:
+        pass
     report = engine.simulate_match()
-    print_match_report(report)
+    print_match_report(report, timeline_mode=args.timeline, timeline_limit=args.timeline_limit)
 
 if __name__ == "__main__":
     main()

@@ -259,7 +259,19 @@ class DuelSystem:
         # Normalize to what MatchEngine expects
         outcome = res.get('outcome')
         if outcome in ('goal', 'shot_saved', 'shot_wide'):
-            norm = {'type': 'shot', 'outcome': 'shot', 'detail': ' '.join(res.get('commentary', []) or [])}
+            # Preserve shot precision so MatchEngine can count stats correctly
+            shot_outcome = (
+                'goal' if outcome == 'goal' else 'saved' if outcome == 'shot_saved' else 'wide'
+            )
+            on_target = shot_outcome in ('goal', 'saved')
+            norm = {
+                'type': 'shot',
+                'outcome': 'shot',
+                'shot_outcome': shot_outcome,  # 'goal' | 'saved' | 'wide'
+                'on_target': on_target,
+                'detail': ' '.join(res.get('commentary', []) or []),
+                'scorer': res.get('scorer'),
+            }
         elif outcome in ('breakthrough', 'key_pass'):
             norm = {'type': 'action', 'outcome': 'win', 'detail': ' '.join(res.get('commentary', []) or [])}
         elif outcome in ('intercept', 'lost'):

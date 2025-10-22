@@ -2,8 +2,14 @@ from __future__ import annotations
 import csv
 import json
 import random
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
+
+# Ensure repo root on path (so `engine` can be imported when running as a script)
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from engine.match import MatchEngine
 from engine.utils import set_random_seed
@@ -22,6 +28,8 @@ def load_teams() -> Dict[str, Team]:
         formation = t.get("formation", "4-4-2")
         style = t.get("style", "balanced")
         attack_channel = t.get("attack_channel", "center")
+        pressing = t.get("pressing", "normal")
+        width = t.get("width", "normal")
         players: List[Player] = []
         for p in t.get("players", []):
             players.append(
@@ -35,7 +43,15 @@ def load_teams() -> Dict[str, Team]:
                     traits=p.get("traits", []),
                 )
             )
-        teams[name] = Team(name=name, players=players, formation=formation, style=style, attack_channel=attack_channel)
+        teams[name] = Team(
+            name=name,
+            players=players,
+            formation=formation,
+            style=style,
+            attack_channel=attack_channel,
+            pressing=pressing,
+            width=width,
+        )
     return teams
 
 
@@ -88,4 +104,3 @@ if __name__ == "__main__":
     out = Path(__file__).resolve().parents[1] / "reports" / "batch_stats.csv"
     write_csv(data, out)
     print(f"Wrote {len(data)} rows to {out}")
-

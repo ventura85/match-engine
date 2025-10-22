@@ -10,6 +10,7 @@ from engine.duel import DuelSystem
 from engine.utils import calculate_team_strength
 from engine.comments import Commentary as C
 from engine.comments_adapter import Comments as CA
+import copy
 
 # Tempo: 90 minut gry (generowane natychmiast). Real-time możliwy w przyszłości.
 DEFAULT_REAL_MINUTES = 20
@@ -27,7 +28,7 @@ BLOCK_TO_CORNER_PROB = 0.22
 
 FOUL_PROB_PER_MIN = 0.16
 STYLE_DEF_FOUL_BONUS = 0.03
-YELLOW_PROB = 0.34
+YELLOW_PROB = 0.27
 SECOND_YELLOW_TO_RED_PROB = 0.25
 DIRECT_RED_PROB = 0.03
 
@@ -46,6 +47,22 @@ DENSITY_LEVELS = {
     "med":  {"micro_prob": 0.60, "micro_min": 0, "micro_max": 2},
     "high": {"micro_prob": 0.85, "micro_min": 1, "micro_max": 2}
 }
+
+# Profile sędziego – wpływa na faule i kartki (mnożniki)
+REFEREE_PROFILES = [
+    {
+        "key": "lenient", "label": "Łagodny",
+        "foul_mult": 0.95, "yellow_mult": 0.90, "red_mult": 0.90, "weight": 0.35,
+    },
+    {
+        "key": "neutral", "label": "Neutralny",
+        "foul_mult": 1.00, "yellow_mult": 1.00, "red_mult": 1.00, "weight": 0.45,
+    },
+    {
+        "key": "strict", "label": "Surowy",
+        "foul_mult": 1.05, "yellow_mult": 1.15, "red_mult": 1.15, "weight": 0.20,
+    },
+]
 
 @dataclass
 class MatchStats:
@@ -83,11 +100,28 @@ class MatchEngine:
         verbose: bool = False,
         real_time: bool = False,
         real_minutes_target: int = DEFAULT_REAL_MINUTES,
-        density: str = "high"  # domyślnie high dla MMO, ale bez „ultra”
+        density: str = "high",  # domyślnie high dla MMO, ale bez „ultra”
+        referee_profile: str | None = None,
     ) -> None:
-        self.team_a = team_a
-        self.team_b = team_b
+        # Pracujemy na kopiach, aby nie mutować wejścia i zapewnić deterministykę testów
+        def _clone_team(src: Team) -> Team:
+            t = copy.deepcopy(src)
+            # Ustandaryzuj energię startową (testy zakładają deterministyczny start)
+            for p in getattr(t, 'players', []) or []:
+                try:
+                    p.energy = 1.0
+                except Exception:
+                    pass
+            return t
+        self.team_a = _clone_team(team_a)
+        self.team_b = _clone_team(team_b)
         self.verbose = verbose
+
+        # Zachowaj style wejściowe do raportu taktycznego (nie nadpisywać zmianami w trakcie meczu)
+        self._initial_tactics = {
+            'team_a_style': getattr(self.team_a, 'style', 'balanced'),
+            'team_b_style': getattr(self.team_b, 'style', 'balanced'),
+        }
 
         self.real_time = bool(real_time)
         self.real_minutes_target = max(1, int(real_minutes_target))
@@ -101,6 +135,11 @@ class MatchEngine:
         self.duel = DuelSystem()
         # Komentarze makro (dłuższe, rzadsze)
         self.cadv = CA()
+        # Reset komentarzy klasowych (anti‑repeat) dla deterministyki między uruchomieniami
+        try:
+            C.load()
+        except Exception:
+            pass
 
         self.duel_minutes_h1 = self._pick_duel_minutes(half=1, count=DUELS_PER_HALF)
         self.duel_minutes_h2 = self._pick_duel_minutes(half=2, count=DUELS_PER_HALF)
@@ -121,6 +160,39 @@ class MatchEngine:
         self._macro_emitted = 0
         self._macro_target = {"low": 2, "med": 3, "high": 4}.get(self.density, 3)
         self._macro_next = 2
+
+        # Aktywni zawodnicy (pierwsza jedenastka) i zmiany
+        self._active_idx: Dict[str, set[int]] = {
+            self.team_a.name: set(range(min(11, len(self.team_a.players)))),
+            self.team_b.name: set(range(min(11, len(self.team_b.players)))),
+        }
+        self._subs_left: Dict[str, int] = {self.team_a.name: 3, self.team_b.name: 3}
+        self.substitutions: List[Dict] = []
+
+        # Sędzia – wybór profilu (losowy lub wymuszony). Domyślnie neutralny
+        # (testy deterministyczne). CLI może przekazać "random".
+        self.referee = self._pick_referee(referee_profile)
+
+        # Obciążenie / dystans i kontrola zmęczenia
+        self._p_load: Dict[tuple, float] = {}
+        self._fatigue_last_minute: int = -1
+
+    def _pick_referee(self, key: str | None) -> Dict:
+        # Wybór z predefiniowanych profili
+        profs = REFEREE_PROFILES
+        keys = {p.get('key'): p for p in profs}
+        if key in keys:
+            return dict(keys[key])
+        if key == 'random':
+            try:
+                import random as _r
+                weights = [float(p.get('weight', 1.0)) for p in profs]
+                idx = _r.choices(range(len(profs)), weights=weights, k=1)[0]
+                return dict(profs[idx])
+            except Exception:
+                return dict(keys.get('neutral', profs[1]))
+        # domyślnie neutralny (deterministycznie)
+        return dict(keys.get('neutral', profs[1]))
 
     # API
     def simulate_match(self) -> Dict:
@@ -163,6 +235,11 @@ class MatchEngine:
 
     # minuta meczu
     def _simulate_minute(self, half: int, minute: int) -> None:
+        # Zmiany personalne i taktyczne w kluczowych minutach
+        if half == 2 and minute in (60, 75):
+            self._attempt_substitutions(minute)
+        if half == 2 and minute == 70:
+            self._maybe_tactical_change_in_play(minute)
         ctrl_a = self.strength_a["control"] * self._style_control_factor(self.team_a.style) * self._control_modifier(self.team_a)
         ctrl_b = self.strength_b["control"] * self._style_control_factor(self.team_b.style) * self._control_modifier(self.team_b)
         team_in_possession = self.team_a if (random.random() < (ctrl_a / max(0.0001, ctrl_a + ctrl_b))) else self.team_b
@@ -240,6 +317,8 @@ class MatchEngine:
             else:
                 text = C.build_up_medium(attacking_team, defending_team)
             self._add_event(minute, attacking_team.name, "build_up", f"{minute}' - {text}")
+        # Zastosuj zmęczenie po minucie akcji
+        self._apply_minute_fatigue(minute, attacking_team, defending_team, None, None)
 
     def _simulate_duel(self, half: int, minute: int, attacking_team: Team) -> None:
         defending_team = self.team_b if attacking_team is self.team_a else self.team_a
@@ -256,16 +335,18 @@ class MatchEngine:
             elif result.get("outcome") == "lose": self.stats.duels_won_a += 1
 
         if result.get("type") == "shot" and result.get("outcome") != "lose":
+            # Zlicz statystyki zgodnie z outcome duelu
             if attacking_team is self.team_a:
-                self.stats.shots_a += 1; self.stats.shots_on_a += 1
+                self.stats.shots_a += 1
+                if result.get("on_target"):
+                    self.stats.shots_on_a += 1
             else:
-                self.stats.shots_b += 1; self.stats.shots_on_b += 1
+                self.stats.shots_b += 1
+                if result.get("on_target"):
+                    self.stats.shots_on_b += 1
 
-            gk_overall = self._keeper_overall(defending_team)
-            att_power = self._team_attack_value(attacking_team, minute) * 1.00
-            goal_prob = self._prob_goal(att_power, gk_overall) * 1.00
-
-            if (random.random() < goal_prob) and (minute not in self._minute_goal_lock):
+            shot_outcome = result.get("shot_outcome")  # 'goal' | 'saved' | 'wide'
+            if shot_outcome == "goal" and (minute not in self._minute_goal_lock):
                 assist = self._maybe_assist(attacking_team, prefer=att_player)
                 self._score_goal(half, minute, attacking_team, att_player.name, assist if assist else None, context=None)
                 self._add_event(minute, attacking_team.name, "context",
@@ -273,16 +354,28 @@ class MatchEngine:
                 self._minute_goal_lock.add(minute)
                 if minute > HALF_SIM_MINUTES:
                     self._h2_stoppages += 1.0
+                # zmęczenie po pojedynku
+                self._apply_minute_fatigue(minute, attacking_team, defending_team, att_player, def_player)
                 return
-            else:
+            elif shot_outcome == "saved":
                 if random.random() < SAVE_TO_CORNER_PROB:
                     self._register_corner(minute, attacking_team, text="Bramkarz z trudem wybija po pojedynku – rzut rożny!")
                 else:
                     self._add_event(minute, attacking_team.name, "shot_on_target",
                                     f"{minute}' - 🧤 {C.duel_shot_saved(att_player)}")
+                # zmęczenie po pojedynku
+                self._apply_minute_fatigue(minute, attacking_team, defending_team, att_player, def_player)
+                return
+            else:  # wide
+                self._add_event(minute, attacking_team.name, "shot_off_target",
+                                f"{minute}' - ❌ {C.shot_off_target(att_player, attacking_team)}")
+                # zmęczenie po pojedynku
+                self._apply_minute_fatigue(minute, attacking_team, defending_team, att_player, def_player)
+                return
 
         self._add_event(minute, attacking_team.name, f"duel_{result.get('type','action')}",
                         f"{minute}' - ⚔️ {result.get('detail','Zacięta walka o piłkę...')}")
+        self._apply_minute_fatigue(minute, attacking_team, defending_team, att_player, def_player)
 
     # MICRO-EVENTY (tanie: nie zmieniają statystyk)
     def _maybe_micro(self, minute: int, att: Team, defe: Team) -> None:
@@ -292,18 +385,21 @@ class MatchEngine:
         count = random.randint(cfg["micro_min"], cfg["micro_max"])
         if count <= 0:
             return
+        used: set[str] = set()
+        options = [
+            ("pass", lambda: C.micro_pass_chain(att, defe)),
+            ("press", lambda: C.micro_press(att, defe)),
+            ("throw", lambda: C.micro_throw_in(att)),
+            ("gk", lambda: C.micro_goal_kick(defe)),
+            ("clear", lambda: C.micro_clearance(att, defe)),
+        ]
         for _ in range(count):
-            r = random.random()
-            if r < 0.35:
-                txt = C.micro_pass_chain(att, defe)
-            elif r < 0.55:
-                txt = C.micro_press(att, defe)
-            elif r < 0.70:
-                txt = C.micro_throw_in(att)
-            elif r < 0.85:
-                txt = C.micro_goal_kick(defe)
-            else:
-                txt = C.micro_clearance(att, defe)
+            avail = [o for o in options if o[0] not in used]
+            if not avail:
+                break
+            key, fn = random.choice(avail)
+            used.add(key)
+            txt = fn()
             self._add_event(minute, att.name, "micro", f"{minute}' - {txt}")
 
     # Makro‑narracje (rzadziej, dłuższe wpisy)
@@ -335,6 +431,7 @@ class MatchEngine:
     def _minute_foul_occurs(self, attacking_team: Team) -> bool:
         defending = self.team_b if attacking_team is self.team_a else self.team_a
         p = FOUL_PROB_PER_MIN + (STYLE_DEF_FOUL_BONUS if (defending.style or '').lower() == 'defensive' else 0.0)
+        # Pressing modyfikuje bazę
         try:
             p_def = defending.pressing_level()
         except Exception:
@@ -343,6 +440,15 @@ class MatchEngine:
             p += 0.02
         elif p_def < 0:
             p -= 0.015
+        # Agresja obrońców/midów lekkim czynnikiem
+        avg_aggr = self._avg_aggression(defending)
+        agg_delta = (avg_aggr - 50.0) / 50.0  # [-1, +1]
+        p += 0.012 * agg_delta
+        # Mnożnik sędziego
+        try:
+            p *= float(self.referee.get('foul_mult', 1.0))
+        except Exception:
+            pass
         return random.random() < max(0.0, min(0.35, p))
 
     def _simulate_foul(self, half: int, minute: int, attacking_team: Team) -> None:
@@ -355,20 +461,36 @@ class MatchEngine:
             self._h2_stoppages += 0.5
 
         foul_place_box = (random.random() < 0.22)
-        booked_player = self._pick_defender(defending_team).name
+        booked_obj = self._pick_defender(defending_team)
+        booked_player = booked_obj.name
         card_txt = ""
 
-        # kartki
-        if random.random() < DIRECT_RED_PROB:
-            self._give_red(defending_team, booked_player)
+        # kartki – zależne od agresji i decyzji ukaranego
+        aggr = self._mental_attr(booked_obj, 'aggression', 50.0)
+        decis = self._mental_attr(booked_obj, 'decisions', 60.0)
+        def clamp01(x: float) -> float:
+            return 0.0 if x < 0.0 else (1.0 if x > 1.0 else x)
+        p_dr = clamp01(DIRECT_RED_PROB + 0.01 * ((aggr - 50.0) / 50.0) - 0.005 * ((decis - 50.0) / 50.0))
+        p_y = clamp01(YELLOW_PROB + 0.08 * ((aggr - 50.0) / 50.0) - 0.05 * ((decis - 50.0) / 50.0))
+        # Mnożniki sędziego
+        try:
+            y_mult = float(self.referee.get('yellow_mult', 1.0))
+            r_mult = float(self.referee.get('red_mult', 1.0))
+            p_y = clamp01(p_y * y_mult)
+            p_dr = clamp01(p_dr * r_mult)
+        except Exception:
+            pass
+
+        if random.random() < p_dr:
+            self._give_red(minute, defending_team, booked_player)
             card_txt = f" {C.red_card(booked_player)}"
             if minute > HALF_SIM_MINUTES:
                 self._h2_stoppages += 0.7
         else:
-            if random.random() < YELLOW_PROB:
+            if random.random() < p_y:
                 is_second = self._give_yellow(defending_team, booked_player)
                 if is_second and (random.random() < SECOND_YELLOW_TO_RED_PROB):
-                    self._give_red(defending_team, booked_player)
+                    self._give_red(minute, defending_team, booked_player)
                     card_txt = f" 🟨🟨→ {C.red_card(booked_player)}"
                     if minute > HALF_SIM_MINUTES:
                         self._h2_stoppages += 0.7
@@ -406,6 +528,8 @@ class MatchEngine:
             else:
                 self._add_event(minute, attacking_team.name, "freekick",
                                 f"{minute}' - {C.freekick(attacking_team)}{card_txt}")
+        # zmęczenie po minucie faulu/SFG
+        self._apply_minute_fatigue(minute, attacking_team, defending_team, None, None)
 
     # Rejestry SFG
     def _register_corner(self, minute: int, team: Team, text: str) -> None:
@@ -431,10 +555,10 @@ class MatchEngine:
         else: self.stats.yellows_b += 1
         return book[player_name] >= 2
 
-    def _give_red(self, team: Team, player_name: str) -> None:
+    def _give_red(self, minute: int, team: Team, player_name: str) -> None:
         if team is self.team_a: self.stats.reds_a += 1
         else: self.stats.reds_b += 1
-        self._add_event(0, team.name, "red_card", f"{C.red_card(player_name)}")
+        self._add_event(minute, team.name, "red_card", f"{minute}' - {C.red_card(player_name)}")
 
     # Raport / zapis gola
     def _score_goal(
@@ -490,21 +614,42 @@ class MatchEngine:
             + [{"team": self.team_b.name, "minute": m, "scorer": s, "assist": a} for (m, s, a) in self.stats.goals_b]
         )
 
+        # Player distance/energy snapshot
+        def build_player_stats(team: Team) -> List[Dict]:
+            out: List[Dict] = []
+            for p in team.players:
+                key = (team.name, getattr(p, 'id', p.name))
+                load = self._p_load.get(key, 0.0)
+                # Skala wyświetlania dystansu: 0.10 ~= 10–12 km dla intensywnych MID
+                dist = round(0.10 * load, 2)
+                out.append({
+                    'id': getattr(p, 'id', 0),
+                    'name': getattr(p, 'name', ''),
+                    'position': getattr(p, 'position', ''),
+                    'energy': round(getattr(p, 'energy', 1.0), 3),
+                    'distance_km': dist,
+                })
+            return out
+
         return {
             "team_a": self.team_a.name,
             "team_b": self.team_b.name,
             "score": (score_a, score_b),
+            "referee": {
+                "key": self.referee.get('key', 'neutral'),
+                "label": self.referee.get('label', 'Neutralny'),
+                "foul_mult": self.referee.get('foul_mult', 1.0),
+                "yellow_mult": self.referee.get('yellow_mult', 1.0),
+                "red_mult": self.referee.get('red_mult', 1.0),
+            },
             "possession": {self.team_a.name: pos_a, self.team_b.name: pos_b},
             "shots": {self.team_a.name: self.stats.shots_a, self.team_b.name: self.stats.shots_b},
             "shots_on_target": {self.team_a.name: self.stats.shots_on_a, self.team_b.name: self.stats.shots_on_b},
             "events": timeline,
             "events_full": events_full,
             "goals": goals_combined,
-            "substitutions": [],
-            "tactical_impact": {
-                "team_a_style": getattr(self.team_a, "style", "balanced"),
-                "team_b_style": getattr(self.team_b, "style", "balanced"),
-            },
+            "substitutions": list(self.substitutions),
+            "tactical_impact": dict(self._initial_tactics),
             # Rich stats (zachowane do UI)
             "stats": {
                 "possession_a": pos_a, "possession_b": pos_b,
@@ -523,6 +668,11 @@ class MatchEngine:
             "score_b": score_b,
             "goals_a": [{"minute": m, "scorer": s, "assist": a} for (m, s, a) in self.stats.goals_a],
             "goals_b": [{"minute": m, "scorer": s, "assist": a} for (m, s, a) in self.stats.goals_b],
+            # Per-player effort/energy
+            "player_stats": {
+                self.team_a.name: build_player_stats(self.team_a),
+                self.team_b.name: build_player_stats(self.team_b),
+            },
         }
 
     # Utils: logi
@@ -552,6 +702,24 @@ class MatchEngine:
         if style == "attacking": return 1.03
         if style == "defensive": return 0.98
         return 1.0
+
+    def _mental_attr(self, p: Player, key: str, default: float = 50.0) -> float:
+        try:
+            attrs = getattr(p, 'attributes', {}) or {}
+            ment = attrs.get('mental', {}) or {}
+            v = float(ment.get(key, default))
+            return v
+        except Exception:
+            return default
+
+    def _avg_aggression(self, team: Team) -> float:
+        pool = self._active_players(team)
+        pref = [pp for pp in pool if (getattr(pp, 'position', '').upper() in ('DEF','MID'))]
+        base = pref if pref else (pool or [])
+        if not base:
+            return 50.0
+        vals = [self._mental_attr(pp, 'aggression', 50.0) for pp in base]
+        return sum(vals) / len(vals)
 
     def _control_modifier(self, team: Team) -> float:
         p_lvl = 0
@@ -595,7 +763,8 @@ class MatchEngine:
         return base
 
     def _keeper_overall(self, team: Team) -> float:
-        gks = [p for p in team.players if (p.position or "").upper() == "GK"]
+        pool = self._active_players(team)
+        gks = [p for p in pool if (p.position or "").upper() == "GK"]
         if not gks: return 70.0
         return max(self._player_overall(p) for p in gks)
 
@@ -610,22 +779,25 @@ class MatchEngine:
         return base * form * energy
 
     def _pick_attacker(self, team: Team) -> Player:
-        forwards = [p for p in team.players if (p.position or "").upper() == "FWD"]
-        mids = [p for p in team.players if (p.position or "").upper() == "MID"]
-        defs = [p for p in team.players if (p.position or "").upper() == "DEF"]
-        pool = forwards or mids or defs or team.players
+        pool_all = self._active_players(team)
+        forwards = [p for p in pool_all if (p.position or "").upper() == "FWD"]
+        mids = [p for p in pool_all if (p.position or "").upper() == "MID"]
+        defs = [p for p in pool_all if (p.position or "").upper() == "DEF"]
+        pool = forwards or mids or defs or pool_all
         return random.choice(pool)
 
     def _pick_defender(self, team: Team) -> Player:
-        defs = [p for p in team.players if (p.position or "").upper() == "DEF"]
-        mids = [p for p in team.players if (p.position or "").upper() == "MID"]
-        gks = [p for p in team.players if (p.position or "").upper() == "GK"]
-        pool = defs or mids or gks or team.players
+        pool_all = self._active_players(team)
+        defs = [p for p in pool_all if (p.position or "").upper() == "DEF"]
+        mids = [p for p in pool_all if (p.position or "").upper() == "MID"]
+        gks = [p for p in pool_all if (p.position or "").upper() == "GK"]
+        pool = defs or mids or gks or pool_all
         return random.choice(pool)
 
     def _maybe_assist(self, team: Team, prefer: Optional[Player] = None) -> Optional[str]:
         if random.random() < 0.6:
-            candidates = [p for p in team.players if (prefer is None or p.name != prefer.name)]
+            pool = self._active_players(team)
+            candidates = [p for p in pool if (prefer is None or p.name != prefer.name)]
             if candidates: return random.choice(candidates).name
         return None
 
@@ -688,6 +860,122 @@ class MatchEngine:
             buff_end = HALF_SIM_MINUTES + BUFF_DURATION_MIN
             self.buff_until[key_player.name] = buff_end
             self._add_event(0, team.name, "half_buff", f"🚀 PRZERWA: {key_player.name} buff +10% na {BUFF_DURATION_MIN} min.")
+        # Zmiany taktyczne na przerwie zależnie od wyniku
+        self._maybe_tactical_adjustments_at_halftime()
+        # Po ewentualnych zmianach stylu przelicz siły
+        self._recompute_strengths()
+
+    # Aktywni zawodnicy (pierwsza XI) pomocniczo
+    def _active_players(self, team: Team) -> List[Player]:
+        idx = self._active_idx.get(team.name) or set()
+        if not idx:
+            # fallback, pierwszych 11 lub wszyscy
+            return team.players[:min(11, len(team.players))] if team.players else []
+        ordered = [i for i in sorted(idx) if 0 <= i < len(team.players)]
+        return [team.players[i] for i in ordered]
+
+    def _attempt_substitutions(self, minute: int) -> None:
+        # Obie drużyny próbują zrobić 1 zmianę, jeżeli mają ławkę
+        for team in (self.team_a, self.team_b):
+            self._attempt_substitution(team, minute)
+
+    def _attempt_substitution(self, team: Team, minute: int) -> None:
+        name = team.name
+        if self._subs_left.get(name, 0) <= 0:
+            return
+        total = len(team.players)
+        active = self._active_idx.get(name, set())
+        if total <= len(active):
+            return  # brak ławki
+        # wybierz najbardziej zmęczonego zawodnika z pola (nie GK)
+        active_list = [(i, team.players[i]) for i in active]
+        out_candidates = [(i, p) for (i, p) in active_list if (getattr(p, 'position', '').upper() != 'GK')]
+        if not out_candidates:
+            return
+        out_i, out_p = min(out_candidates, key=lambda ip: getattr(ip[1], 'energy', 1.0))
+        # wybierz rezerwowego (preferuj tę samą pozycję)
+        bench_idx = [i for i in range(total) if i not in active]
+        same_pos = [i for i in bench_idx if (getattr(team.players[i], 'position', '').upper() == getattr(out_p, 'position', '').upper())]
+        in_i = (same_pos[0] if same_pos else bench_idx[0]) if bench_idx else None
+        if in_i is None:
+            return
+        in_p = team.players[in_i]
+        # wykonaj zmianę
+        active.remove(out_i)
+        active.add(in_i)
+        self._active_idx[name] = active
+        self._subs_left[name] = max(0, self._subs_left.get(name, 0) - 1)
+        self.substitutions.append({
+            'minute': minute,
+            'team': name,
+            'out': out_p.name,
+            'in': in_p.name,
+            'reason': 'zmęczenie'
+        })
+        self._add_event(minute, name, 'substitution', f"{minute}' - 🔁 Zmiana w {name}: {out_p.name} ▶ {in_p.name}")
+        # Po zmianie przelicz siły
+        self._recompute_strengths()
+
+    def _style_mod(self, style: str) -> Tuple[float, float]:
+        s = (style or 'balanced').lower()
+        if s == 'attacking':
+            return 1.10, 0.95
+        if s == 'defensive':
+            return 0.95, 1.10
+        return 1.0, 1.0
+
+    def _team_strength_from_active(self, team: Team, active: List[Player]) -> Dict[str, float]:
+        if not active:
+            return {'attack': 50.0, 'defense': 50.0, 'control': 50.0, 'overall': 50.0}
+        atk_pool = [p for p in active if (getattr(p, 'position', '').upper() in ('FWD', 'MID'))]
+        def_pool = [p for p in active if (getattr(p, 'position', '').upper() in ('DEF', 'GK'))]
+        atk_pool = sorted(atk_pool, key=lambda p: self._player_overall(p), reverse=True)[:5] or active[:5]
+        def_pool = sorted(def_pool, key=lambda p: self._player_overall(p), reverse=True)[:5] or active[:5]
+        base_attack = sum(self._player_overall(p) for p in atk_pool) / max(1, len(atk_pool))
+        base_defense = sum(self._player_overall(p) for p in def_pool) / max(1, len(def_pool))
+        control = sum(self._player_overall(p) for p in active) / max(1, len(active))
+        modA, modD = self._style_mod(getattr(team, 'style', 'balanced'))
+        return {
+            'attack': base_attack * modA,
+            'defense': base_defense * modD,
+            'control': control,
+            'overall': (base_attack * modA + base_defense * modD + control) / 3.0,
+        }
+
+    def _recompute_strengths(self) -> None:
+        a_active = self._active_players(self.team_a)
+        b_active = self._active_players(self.team_b)
+        self.strength_a = self._team_strength_from_active(self.team_a, a_active)
+        self.strength_b = self._team_strength_from_active(self.team_b, b_active)
+
+    def _maybe_tactical_adjustments_at_halftime(self) -> None:
+        score_a = len(self.stats.goals_a)
+        score_b = len(self.stats.goals_b)
+        # trailing -> ofensywnie, leading -> defensywnie
+        if score_a < score_b:
+            self.team_a.style = 'attacking'; self.team_a.pressing = 'high'
+            self._add_event(HALF_SIM_MINUTES, self.team_a.name, 'tactical_change', f"45' - ⚙️ Zmiana taktyki {self.team_a.name}: styl=attacking, pressing=high")
+        elif score_a > score_b:
+            self.team_b.style = 'attacking'; self.team_b.pressing = 'high'
+            self._add_event(HALF_SIM_MINUTES, self.team_b.name, 'tactical_change', f"45' - ⚙️ Zmiana taktyki {self.team_b.name}: styl=attacking, pressing=high")
+        # lekka korekta szerokości dla zespołu prowadzącego (zamykanie środka)
+        if score_a > score_b:
+            self.team_a.width = 'narrow'
+        elif score_b > score_a:
+            self.team_b.width = 'narrow'
+
+    def _maybe_tactical_change_in_play(self, minute: int) -> None:
+        score_a = len(self.stats.goals_a)
+        score_b = len(self.stats.goals_b)
+        # Około 70' – korekty w zależności od wyniku
+        if score_a < score_b:
+            self.team_a.style = 'attacking'; self.team_a.pressing = 'high'; self.team_a.width = 'wide'
+            self._add_event(minute, self.team_a.name, 'tactical_change', f"{minute}' - ⚙️ {self.team_a.name} podkręca: styl=attacking, pressing=high, width=wide")
+        elif score_b < score_a:
+            self.team_b.style = 'attacking'; self.team_b.pressing = 'high'; self.team_b.width = 'wide'
+            self._add_event(minute, self.team_b.name, 'tactical_change', f"{minute}' - ⚙️ {self.team_b.name} podkręca: styl=attacking, pressing=high, width=wide")
+        # po zmianach stylu przelicz siły
+        self._recompute_strengths()
 
     def _team_has_active_buff(self, team: Team, minute: int) -> bool:
         if minute <= HALF_SIM_MINUTES: return False
@@ -707,3 +995,81 @@ class MatchEngine:
         if est < 4.0: return 4
         if est < 5.0: return 5
         return 6
+
+    # ─────────────────────────────  ZMĘCZENIE / DYSTANS  ─────────────────────────
+    def _apply_minute_fatigue(self, minute: int, in_pos: Team, defe: Team, att_p: Optional[Player], def_p: Optional[Player]) -> None:
+        if self._fatigue_last_minute == minute:
+            return
+        self._fatigue_last_minute = minute
+
+        base_drain = 0.0028
+
+        def pos_mult(p: Player) -> float:
+            pos = (getattr(p, 'position', '') or '').upper()
+            if pos == 'GK': return 0.5
+            if pos == 'DEF': return 0.9
+            if pos == 'MID': return 1.1
+            if pos == 'FWD': return 1.0
+            return 1.0
+
+        def style_mult(team: Team) -> float:
+            s = (getattr(team, 'style', 'balanced') or '').lower()
+            if s == 'attacking': return 1.05
+            if s == 'defensive': return 0.97
+            return 1.0
+
+        def press_mult(team: Team) -> float:
+            try:
+                pl = team.pressing_level()
+            except Exception:
+                pl = 0
+            if pl > 0: return 1.10
+            if pl < 0: return 0.92
+            return 1.0
+
+        def width_mult(team: Team) -> float:
+            try:
+                wl = team.width_level()
+            except Exception:
+                wl = 0
+            if wl > 0: return 1.05
+            if wl < 0: return 0.98
+            return 1.0
+
+        def channel_mult(team: Team, is_possession: bool) -> float:
+            if not is_possession:
+                return 1.0
+            ch = (getattr(team, 'attack_channel', 'center') or '').lower()
+            if ch == 'wings': return 1.03
+            return 1.0
+
+        def stamina_mult(p: Player) -> float:
+            try:
+                attrs = getattr(p, 'attributes', {}) or {}
+                stam = float((attrs.get('physical', {}) or {}).get('stamina', 75))
+            except Exception:
+                stam = 75.0
+            return max(0.9, min(1.1, 1.0 - (stam - 60.0)/400.0))
+
+        def apply_for_team(team: Team, is_possession: bool) -> None:
+            m_team = style_mult(team) * press_mult(team) * width_mult(team) * channel_mult(team, is_possession)
+            for p in self._active_players(team):
+                m_p = pos_mult(p) * stamina_mult(p)
+                drain = base_drain * m_team * m_p
+                key = (team.name, getattr(p, 'id', p.name))
+                # dodatkowy koszt gdy uczestnik pojedynku w tej minucie
+                if att_p is not None and p is att_p:
+                    drain += 0.002
+                if def_p is not None and p is def_p:
+                    drain += 0.002
+                # aktualizacja energii
+                try:
+                    new_e = max(0.60, min(1.0, (getattr(p, 'energy', 1.0) or 1.0) - drain))
+                    p.energy = new_e
+                except Exception:
+                    pass
+                # akumulacja „load” do dystansu
+                self._p_load[key] = self._p_load.get(key, 0.0) + (drain / base_drain)
+
+        apply_for_team(in_pos, True)
+        apply_for_team(defe, False)

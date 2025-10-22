@@ -29,11 +29,14 @@ class Commentary:
     - Każda metoda ma sensowny fallback (gdy brak wpisu w JSON)
     """
     _pack: Dict[str, List[str]] = {}
+    _recent: Dict[str, List[str]] = {}
+    _no_repeat_window: int = 3
 
     @classmethod
     def load(cls, pack_path: Optional[Path] = None) -> None:
         path = pack_path or DEFAULT_PACK
         cls._pack = _load_pack(path)
+        cls._recent = {}
 
     # ────────────────────────────── NAGŁÓWKI / META ──────────────────────────────
     @staticmethod
@@ -88,13 +91,11 @@ class Commentary:
     # ─────────────────────────────  BUDOWANIE AKCJI  ─────────────────────────────
     @classmethod
     def build_up_short(cls, att, defe) -> str:
-        base = cls._pack.get("build_up_short")
-        return _safe_choice(base, "Krótka klepka, cierpliwe budowanie.")
+        return cls._pick_no_repeat("build_up_short", "Krótka klepka, cierpliwe budowanie.")
 
     @classmethod
     def build_up_medium(cls, att, defe) -> str:
-        base = cls._pack.get("build_up_medium")
-        return _safe_choice(base, "Zmienna wysokość ataku, wachlowanie piłką – czekają na lukę.")
+        return cls._pick_no_repeat("build_up_medium", "Zmienna wysokość ataku, wachlowanie piłką – czekają na lukę.")
 
     # ─────────────────────────────  POJEDYNKI / KONTEKST  ────────────────────────
     @classmethod
@@ -112,28 +113,23 @@ class Commentary:
     # ─────────────────────────────  MICRO-EVENTY (tanie)  ────────────────────────
     @classmethod
     def micro_pass_chain(cls, att, defe) -> str:
-        base = cls._pack.get("micro_pass_chain")
-        return _safe_choice(base, "Trójkąt podań w bocznym sektorze.")
+        return cls._pick_no_repeat("micro_pass_chain", "Trójkąt podań w bocznym sektorze.")
 
     @classmethod
     def micro_press(cls, att, defe) -> str:
-        base = cls._pack.get("micro_press")
-        return _safe_choice(base, "Wysoki pressing, wymuszone zagranie do tyłu.")
+        return cls._pick_no_repeat("micro_press", "Wysoki pressing, wymuszone zagranie do tyłu.")
 
     @classmethod
     def micro_throw_in(cls, att) -> str:
-        base = cls._pack.get("micro_throw_in")
-        return _safe_choice(base, "Aut na wysokości pola karnego – szybko wznawiają.")
+        return cls._pick_no_repeat("micro_throw_in", "Aut na wysokości pola karnego – szybko wznawiają.")
 
     @classmethod
     def micro_goal_kick(cls, defe) -> str:
-        base = cls._pack.get("micro_goal_kick")
-        return _safe_choice(base, "Wznowienie od bramki, rozgrywają na krótko.")
+        return cls._pick_no_repeat("micro_goal_kick", "Wznowienie od bramki, rozgrywają na krótko.")
 
     @classmethod
     def micro_clearance(cls, att, defe) -> str:
-        base = cls._pack.get("micro_clearance")
-        return _safe_choice(base, "Wybicie „gdziekolwiek”, ale oddalają zagrożenie.")
+        return cls._pick_no_repeat("micro_clearance", "Wybicie „gdziekolwiek”, ale oddalają zagrożenie.")
 
     # ─────────────────────────────  KARTKI  ──────────────────────────────────────
     @classmethod
@@ -145,6 +141,19 @@ class Commentary:
     def red_card(cls, name: str) -> str:
         base = cls._pack.get("red_card")
         return _safe_choice(base, f"🟥 Czerwona kartka! {name} wylatuje!")
+
+    # ─────────────────────────────  Anti‑repeat helper  ─────────────────────────
+    @classmethod
+    def _pick_no_repeat(cls, key: str, fallback: str) -> str:
+        arr = cls._pack.get(key) or []
+        if not arr:
+            return fallback
+        recent = cls._recent.setdefault(key, [])
+        # filtruj ostatnie N; jeśli zabraknie – bierz pełną pulę
+        pool = [v for v in arr if v not in recent[-cls._no_repeat_window:]] or arr
+        choice = random.choice(pool)
+        recent.append(choice)
+        return choice
 
 # automatyczne wczytanie pakietu przy imporcie
 try:

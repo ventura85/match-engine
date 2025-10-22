@@ -1,223 +1,72 @@
 # Football Manager Match Engine ⚽
 
-Profesjonalny silnik meczowy dla gry menedżera piłkarskiego, napisany w Python 3.11.
+Modułowy silnik meczowy (Python 3.11) do gry MMO/manager, z naciskiem na taktykę, realizm i czytelny raport meczu. Silnik działa w skali 90’ (symulowane natychmiastowo), a na potrzeby testów utrzymuje skróconą oś czasu 1..10.
 
-## Opis projektu
+## Co potrafi (stan na teraz)
 
-Projekt implementuje kompletny, modułowy silnik symulacji meczów piłkarskich z następującymi funkcjonalnościami:
+- Model zawodnika: atrybuty fizyczne/techniczne/mentalne; energia i forma wpływają na OVR i przebieg meczu.
+- Taktyka: formacja, styl (defensive/balanced/attacking), kanał ataku (wings/center), pressing (low/normal/high), szerokość (narrow/normal/wide).
+- Pojedynki (Live Action Duels): kluczowe starcia 1v1 z rezultatem shot/goal/saved/wide; poprawne liczenie strzałów celnych.
+- System fauli i kartek: prawdopodobieństwo fauli z taktyki i „agresji” obrońców; żółte/czerwone zależne łagodnie od agresji i decisions zawodnika.
+- Profil sędziego: lenient/neutral/strict z mnożnikami na faule i kartki; profil drukowany w CLI i zapisany w raporcie.
+- Zmiany zawodników: automatyczne suby (60’ i 75’, max 3) przy ławce; wybór najbardziej zmęczonego i rezerwowego tej samej pozycji; wpływ na siłę drużyny.
+- Zmiany taktyczne: podczas przerwy i ok. 70’ zależnie od wyniku (bufory).
+- Zmęczenie i dystans: per‑minuta drenaż energii zależny od pozycji, stylu/pressingu/szerokości/kanału oraz udziału w pojedynkach; raport zawiera `player_stats` (energia i `distance_km`).
+- Komentarze: mikro (tanie) i makro‑narracje; anty‑karuzela rzutów rożnych.
+- Raport: wynik, gole (z asystami), posiadanie, strzały (w tym celne), SFG, faule/kartki, pełny timeline i skrót, profil sędziego, listę zmian, per‑player `distance_km` i energia.
+- Testy: 19 zielonych, w tym deterministyczność (seed), struktura raportu, duels/strzały, kartki i profil sędziego.
 
-- **Szczegółowy model zawodników**: Atrybuty fizyczne, techniczne i mentalne
-- **Wyświetlanie składów przed meczem**: Pełne składy z statystykami, formą i cechami zawodników
-- **Zaawansowana taktyka**: Formacje, style gry (defensive/balanced/attacking), kanały ataku
-- **Live Action Duels**: System pojedynków zawodników z probabilistyczną mechaniką
-- **10-minutowa symulacja**: Mecz trwa 10 minut (5 min pierwsza połowa + 5 min druga połowa)
-- **System zmian**: Zmiany taktyczne podczas przerwy wpływające na formę zawodników
-- **Realistyczne komentarze**: Polski komentarz z emotikonami (gole, obrony, drybling)
-- **Analiza taktyczna**: Widoczny wpływ stylu gry na skuteczność i statystyki
-- **Szczegółowe raporty**: Wydarzenia, statystyki, posiadanie piłki, strzały, zmiany
-
-## Struktura projektu
+## Struktura
 
 ```
 .
-├── main.py                 # Główny punkt wejścia
-├── requirements.txt        # Zależności Python
-├── README.md              # Ten plik
-├── replit.md              # Dokumentacja techniczna i user preferences
-├── models/                # Modele danych
-│   ├── __init__.py
-│   ├── player.py         # Model zawodnika
-│   └── team.py           # Model drużyny
-├── engine/                # Silnik meczowy
-│   ├── __init__.py
-│   ├── match.py          # Główny silnik symulacji
-│   ├── duel.py           # System Live Action Duels
-│   └── utils.py          # Funkcje pomocnicze
-├── data/                  # Dane
-│   └── teams.json        # Przykładowe drużyny
-└── tests/                 # Testy
-    └── test_match_engine.py
+├── main.py                 # CLI, druk sędziego, raport, zmiany, dystans
+├── engine/
+│   ├── match.py           # Silnik: pętla 90’, taktyka, SFG, kary, zmęczenie
+│   ├── duel.py            # System pojedynków 1v1
+│   ├── comments*.py       # Komentarze
+│   └── utils.py
+├── models/                # Player/Team
+├── data/teams.json        # Przykładowe drużyny
+├── scripts/               # batch i matrix do kalibracji
+└── tests/                 # testy (pytest)
 ```
 
-## Instalacja i uruchomienie
+## Uruchomienie
 
-### 1. Instalacja zależności
-
-```bash
+```
 pip install -r requirements.txt
+python main.py --seed 42 --density high --referee random --timeline all
 ```
 
-### 2. Uruchomienie symulacji
+Przydatne flagi:
+- `--teamA/--teamB` – wybór drużyn
+- `--referee` – `random|lenient|neutral|strict`
+- `--verbose` – gęstsze logi
+- `--timeline` – `all|last|key|nomicro` (jak drukować chronologię)
+- `--timeline-limit` – limit zdarzeń dla trybu `last`
 
-**Podstawowe uruchomienie** (domyślne drużyny):
-```bash
-python main.py
-```
+## Batch/Matrix do kalibracji
 
-**Z parametrami**:
-```bash
-python main.py --teamA "Red Lions" --teamB "Blue Hawks" --seed 42 --verbose
-```
+- `python scripts/run_batch.py` → `reports/batch_stats.csv`
+- `python scripts/run_matrix.py` → `reports/matrix.csv` (8×8 presetów)
 
-### 3. Uruchomienie testów
+Analizuj średnie (gole, strzały, faule, kartki, rogi) i koryguj delikatnie stałe w `engine/match.py` jeśli potrzeba.
 
-```bash
-pytest
-```
+## Dane zawodników
 
-lub z verbose:
-```bash
-pytest -v
-```
+Minimalny blok atrybutów (przykład w `data/teams.json`):
+- Physical: `speed`, `strength`, `stamina`
+- Technical: `passing`, `shooting`, `dribbling`, `tackling`, `marking`, `reflexes`, `handling`
+- Mental: `positioning`, `concentration`, `decisions`, `aggression` (opcjonalnie; domyślnie 50)
 
-## Parametry CLI
+## Oceny pomeczowe (plan)
 
-- `--teamA <nazwa>` - Nazwa pierwszej drużyny (domyślnie: "Red Lions")
-- `--teamB <nazwa>` - Nazwa drugiej drużyny (domyślnie: "Blue Hawks")
-- `--seed <liczba>` - Seed dla generatora losowego (zapewnia powtarzalność wyników)
-- `--verbose` - Wyświetla szczegółowe informacje podczas symulacji
+Kolejny etap: per‑player ratings 1–10 z uwzględnieniem goli/asyst, xG proxy, pojedynków, obron GK, fauli/kartek i pracy bez piłki (distance/work‑rate). Zapis w raporcie i druk Top 3.
 
-## Przykłady użycia
+## Licencja
 
-### Przykład 1: Domyślny mecz
-```bash
-python main.py
-```
-
-Wyświetli:
-- ⚽ Składy obu drużyn przed meczem
-- 🏟️ Przebieg meczu minuta po minucie z komentarzem
-- ⏸️ Przerwa (ewentualnie zmiany)
-- 🏁 Raport końcowy z analizą taktyczną
-
-### Przykład 2: Powtarzalny wynik
-```bash
-python main.py --seed 42
-# Każde uruchomienie z tym samym seedem da identyczny wynik
-```
-
-### Przykład 3: Tryb verbose
-```bash
-python main.py --verbose
-# Pokazuje szczegółowe informacje o pojedynkach i zdarzeniach
-```
-
-## Model danych
-
-### Player (Zawodnik)
-
-Każdy zawodnik posiada:
-- **Podstawowe**: id, name, position (GK/DEF/MID/FWD)
-- **Atrybuty**: 
-  - Physical: speed, strength, stamina
-  - Technical: passing, shooting, dribbling, tackling, marking, reflexes, handling
-  - Mental: positioning, concentration, decisions
-- **Stan**: energy (0.7-1.0), form (0.0-1.0)
-- **Cechy**: traits (np. 'Ambitious', 'Fast', 'Clinical')
-
-**Wzór Overall Rating**:
-```
-overall = (0.5 * avg(physical) + 0.35 * avg(technical) + 0.15 * avg(mental)) 
-          * form_modifier * energy
-```
-
-### Team (Drużyna)
-
-Każda drużyna posiada:
-- **Podstawowe**: name, players (lista 11 zawodników)
-- **Taktyka**: 
-  - formation: np. '4-4-2', '4-3-3'
-  - style: 'defensive', 'balanced', 'attacking'
-  - attack_channel: 'wings', 'center'
-
-**Modyfikatory stylu**:
-- `attacking`: +10% atak, -5% obrona
-- `defensive`: -5% atak, +10% obrona
-- `balanced`: bez modyfikatorów
-
-## Mechanika silnika
-
-### Symulacja meczu
-
-1. **Tick-based**: Mecz dzieli się na 10 ticków (minut) - 5 na każdą połowę
-2. **Wyświetlanie składów**: Przed meczem pokazywane są wszystkie składy z statystykami
-3. **Posiadanie piłki**: Określane na podstawie team_control + RNG
-4. **Akcje ofensywne**: Prawdopodobieństwo zależne od attack_rating vs defense_rating
-5. **Przerwa**: Po 5 minutach mecz się zatrzymuje na przerwę
-6. **Zmiany taktyczne**: 30% szans na zmianę podczas przerwy (wpływa na formę zawodnika)
-7. **Komentarz**: Polski komentarz z emotikonami dla wszystkich kluczowych akcji
-
-### Komentarze meczowe
-
-Silnik generuje realistyczne komentarze po polsku:
-- ⚽⚽⚽ **GOOOOOOL!!!!** - bramki z fajerwerkami
-- 🧤 **OBRONA! Wielka parada!** - obronione strzały
-- ✨ **Świetny drybling!** - skuteczne dryblingi
-- ❌ **Strzela niecelnie!** - nieudane strzały
-
-### Live Action Duels
-
-System pojedynków 1v1:
-1. Wybór zawodników (atakujący vs broniący)
-2. Losowanie akcji: dribble, pass, shot, tackle
-3. Rozstrzygnięcie na podstawie:
-   - Atrybuty zawodników
-   - Taktyka drużyny
-   - Element losowy (RNG)
-
-### Strzały na bramkę
-
-Wieloetapowy proces:
-1. **Czy strzał celny?** → zależy od shooting + positioning
-2. **Czy będzie gol?** → shooter_rating vs goalkeeper_rating + RNG
-3. Możliwe wyniki: goal, shot_saved, shot_off_target, shot_blocked
-
-### System zmian
-
-Podczas przerwy:
-- 30% szans na zmianę taktyczną
-- Wybierany jest zawodnik z najniższą formą
-- Zmiana wpływa na formę zawodnika (zmniejsza do 80%)
-- Zmiana jest widoczna w raporcie końcowym
-
-## Konfiguracja drużyn
-
-Drużyny definiuje się w pliku `data/teams.json`:
-
-```json
-{
-  "teams": [
-    {
-      "name": "My Team",
-      "formation": "4-3-3",
-      "style": "attacking",
-      "attack_channel": "wings",
-      "players": [
-        {
-          "id": 1,
-          "name": "Player Name",
-          "position": "GK",
-          "attributes": {
-            "physical": {"speed": 55, "strength": 70, "stamina": 75},
-            "technical": {"reflexes": 85, "handling": 82, "kicking": 68},
-            "mental": {"positioning": 84, "concentration": 86, "decisions": 78}
-          },
-          "energy": 0.95,
-          "form": 0.88,
-          "traits": ["Calm", "Leader"]
-        }
-      ]
-    }
-  ]
-}
-```
-
-### Pozycje zawodników
-- **GK** - Goalkeeper (bramkarz)
-- **DEF** - Defender (obrońca)
-- **MID** - Midfielder (pomocnik)
-- **FWD** - Forward (napastnik)
-
+Projekt demonstracyjny – swobodny do modyfikacji.
 ### Atrybuty (skala 1-99)
 Rekomendowane zakresy:
 - **50-60**: Przeciętny zawodnik
