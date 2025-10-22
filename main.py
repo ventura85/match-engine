@@ -103,7 +103,10 @@ def print_match_report(report: Dict, *, timeline_mode: str = "all", timeline_lim
     print("\n📈 STATYSTYKI:")
     print(f"   Posiadanie piłki:\n      {report['team_a']}: {st['possession_a']}%\n      {report['team_b']}: {st['possession_b']}%")
     print(f"\n   Strzały:\n      {report['team_a']}: {st['shots_a']} ({st['shots_on_a']} celnych)\n      {report['team_b']}: {st['shots_b']} ({st['shots_on_b']} celnych)")
-    print(f"\n   Wygrane pojedynki:\n      {report['team_a']}: {st['duels_won_a']}\n      {report['team_b']}: {st['duels_won_b']}")
+    # ⬇️ ZMIANA: Pojedynki z totals (fallback na same 'won' gdyby ktoś odpalił starszy match.py)
+    duels_tot_a = st.get('duels_total_a', st.get('duels_won_a', 0))
+    duels_tot_b = st.get('duels_total_b', st.get('duels_won_b', 0))
+    print(f"\n   Pojedynki (wygrane/łącznie):\n      {report['team_a']}: {st['duels_won_a']}/{duels_tot_a}\n      {report['team_b']}: {st['duels_won_b']}/{duels_tot_b}")
     print(f"\n   Stałe fragmenty:\n      Rogi: {report['team_a']}: {st['corners_a']}  |  {report['team_b']}: {st['corners_b']}\n      Wolne: {report['team_a']}: {st['freekicks_a']}  |  {report['team_b']}: {st['freekicks_b']}\n      Karne: {report['team_a']}: {st['penalties_a']}  |  {report['team_b']}: {st['penalties_b']}")
     print(f"\n   Faule i kartki:\n      Faule: {report['team_a']}: {st['fouls_a']}  |  {report['team_b']}: {st['fouls_b']}\n      Żółte: {report['team_a']}: {st['yellows_a']}  |  {report['team_b']}: {st['yellows_b']}\n      Czerwone: {report['team_a']}: {st['reds_a']}  |  {report['team_b']}: {st['reds_b']}")
 

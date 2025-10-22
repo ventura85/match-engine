@@ -1,0 +1,203 @@
+# ======================================================================
+#  MATCH ENGINE — KONFIGURACJA
+#  Zmień wartości tutaj zamiast grzebać w kodzie.
+#  Jeśli uruchamiasz bez --config, silnik może wczytać ten plik domyślnie.
+# ======================================================================
+
+match:
+  minutes: 90                 # czas symulowany
+  real_time: false            # tryb RT dopiero później
+  seed: null                  # null = użyj seeda z CLI lub losowy
+  stoppage_time_range: [3, 7] # widełki doliczonego czasu
+
+teams:
+  allow_dynamic_tactic_changes: true
+  # Wpływ zmiany taktyki „w locie” (np. w 70’) na szanse akcji:
+  live_change_modifiers:
+    pressing_high_attack_boost: 0.05
+    width_wide_cross_boost: 0.04
+    style_attacking_final_third_entries: 0.06
+
+duels:
+  per_half_limit: 4           # wcześniej 3 — lekko zwiększamy intensywność
+  # wpływy taktyczne na sukces duelu (±):
+  pressing_influence: 0.10
+  width_influence: 0.05
+  style_influence:
+    defensive: -0.03
+    balanced: 0.00
+    attacking: 0.03
+
+fatigue:
+  enabled: true
+  # Zużycie energii na minutę:
+  base_drain_per_min: 0.28
+  # Dodatkowe koszty:
+  pressing_extra_drain: 0.15
+  duel_participation_drain: 0.25
+  sprint_action_drain: 0.35
+  halftime_regen: 7
+  # Mnożniki wg pracowitości:
+  work_rate_multipliers: {low: 0.75, med: 1.0, high: 1.35}
+  # Mnożniki wg pozycji (używane też do dystansu):
+  position_multipliers:
+    GK: 0.45
+    CB: 0.85
+    FB: 1.10
+    DM: 0.95
+    CM: 1.05
+    AM: 1.00
+    W:  1.15
+    ST: 1.00
+  # Wpływ energii na „umiejętność efektywną”:
+  energy_penalty_thresholds:
+    - {below: 70, skill_mult: 0.95}
+    - {below: 50, skill_mult: 0.88}
+    - {below: 30, skill_mult: 0.75}
+
+distance:
+  enabled: true
+  # Bazowa prędkość chodzone+trucht (km/min). 0.11 ~= ~9.9 km/90'
+  base_speed_km_per_min: 0.11
+  # Dodatkowe modyfikatory dystansu:
+  pressing_speed_bonus: 0.01     # +0.01 km/min przy wysokim pressingu
+  sprint_boost_per_action: 0.03  # dodawane przy zdarzeniach „sprint”
+  style_speed_adjust:
+    defensive: -0.005
+    balanced: 0.0
+    attacking: 0.005
+  # Delikatna losowość per gracz, aby TOP3 nie było identyczne:
+  player_random_jitter_pct: 0.07 # ±7% losowego mnożnika
+
+injuries:
+  enabled: true
+  p_base_per_min: 0.0008
+  low_energy_mult: 1.5           # energy < 40
+  very_low_energy_mult: 2.0      # energy < 25
+  rough_match_bonus: 0.20        # surowy sędzia + wysoki pressing przeciwnika
+  # Szanse rozkładaj po trafieniu (np. 65/25/10):
+  severity_weights: {minor: 0.65, moderate: 0.25, severe: 0.10}
+  severities:
+    minor:    {requires_sub: false, recovery_days: [0,1]}
+    moderate: {requires_sub: true,  recovery_days: [2,4]}
+    severe:   {requires_sub: true,  recovery_days: [5,10]}
+  forced_sub_when_possible: true
+  play_with_10_if_no_subs: true
+
+set_pieces:
+  enabled: true
+  corners:
+    xg_goal_share_target: [0.06, 0.12]  # do testów rozkładowych
+    # Schematy rożnych (wagi/parametry):
+    schemes:
+      short:
+        weight: 0.25
+        shot_chance: 0.18
+        sot_ratio: 0.45
+        counter_chance: 0.10
+      near_post:
+        weight: 0.30
+        shot_chance: 0.32
+        sot_ratio: 0.38
+        counter_chance: 0.06
+      far_post:
+        weight: 0.25
+        shot_chance: 0.28
+        sot_ratio: 0.40
+        counter_chance: 0.07
+      crowd_gk:
+        weight: 0.20
+        shot_chance: 0.30
+        sot_ratio: 0.36
+        foul_att_chance: 0.06
+  free_kicks:
+    xg_direct: 0.06
+    xg_indirect_shot: 0.08
+    cross_to_shot_prob: 0.35
+    # Odległość/pozycja na razie abstrakcyjne — możesz dodać później
+
+xg:
+  open_play_shot: 0.09
+  header_from_cross: 0.07
+  rebound_close: 0.22
+  penalty: 0.76
+
+referee:
+  profile: "balanced"            # "lenient" / "balanced" / "strict"
+  yellow_card_range: [2.0, 5.5]  # target na testy rozkładowe
+  profiles:
+    lenient:
+      foul_call_bias: -0.05
+      card_bias: -0.10
+      added_time_bias: -0.5
+    balanced:
+      foul_call_bias: 0.0
+      card_bias: 0.0
+      added_time_bias: 0.0
+    strict:
+      foul_call_bias: 0.06
+      card_bias: 0.12
+      added_time_bias: 0.5
+
+zones:
+  enabled: true
+  # Prosty model tercji + kanałów bocznych/środka (bez wpływu na wynik — na razie tylko telemetry):
+  thirds: ["DEF", "MID", "ATT"]
+  track_entries: true
+  final_third_entry_weight: 1.0
+  box_entry_is_att_center: true  # ATT_THIRD_CENTER liczymy jako „wejście do pola”
+
+events:
+  # Emisja zdarzeń i porządek karnych:
+  emit_penalty_awarded_always: true
+  enforce_penalty_sequence: true   # PENALTY_AWARDED -> SHOT -> GOAL/MISS
+  # Kolejka zdarzeń (na przyszłość RT):
+  queue_size_limit: 5000
+
+commentary:
+  # Anty-duble i rotacja fraz:
+  anti_duplicate_window: 5     # ile ostatnich fraz zapamiętać
+  max_same_phrase_in_row: 2
+  weights_decay_after_use: 0.15  # tymczasowo obniż wagę użytego szablonu
+  # Formatowanie nazw:
+  fallback_name: "Zawodnik"
+  show_penalty_awarded_highlight: true
+
+stats:
+  enabled: true
+  track:
+    - shots
+    - shots_on_target
+    - goals
+    - duels_total
+    - duels_won
+    - duels_lost
+    - fouls
+    - cards_yellow
+    - cards_red
+    - xg
+    - minutes_played
+    - avg_energy_end
+    - final_third_entries
+    - box_entries
+    - corners_for
+    - free_kicks_for
+  # Progi do testów rozkładowych (batch 200–1000 meczów):
+  distribution_expectations:
+    goals_per_match_range: [2.2, 4.2]
+    set_piece_goal_share_range: [0.15, 0.35]
+    yellows_per_match_range: [2.0, 5.5]
+
+output:
+  ndjson_events: "./out/match_{seed}.ndjson"  # strumień eventów
+  stats_json: "./out/stats_{seed}.json"       # agregaty ze statystyk
+  warn_on_distribution_shift: true
+  distribution_baseline: "./out/baseline_distribution.json"
+
+validation:
+  enabled: true
+  # Proste sprawdzenia przy starcie (zamiast twardych wyjątków w połowie meczu):
+  checks:
+    fatigue_positive_numbers: true
+    probabilities_in_0_1: true
+    yaml_types_sane: true

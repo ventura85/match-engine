@@ -1,6 +1,6 @@
 """Model zawodnika piłkarskiego."""
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import List, Dict, Literal
 
 
 @dataclass
@@ -22,7 +22,10 @@ class Player:
     position: str  # GK, DEF, MID, FWD
     attributes: Dict[str, Dict[str, int]] = field(default_factory=dict)
     # attributes struktura: {'physical': {}, 'technical': {}, 'mental': {}}
-    energy: float = 1.0  # 0.7-1.0
+    energy: float = 1.0  # normalized 0.0-1.0 (back-compat)
+    stamina_base: int = 75  # 1-100 baseline stamina for fatigue model
+    work_rate: Literal["low","med","high"] = "med"
+    distance_km: float = 0.0
     form: float = 1.0    # 0.0-1.0
     traits: List[str] = field(default_factory=list)
     

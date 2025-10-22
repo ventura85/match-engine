@@ -1,6 +1,13 @@
-"""Silnik meczowy i komponenty symulacji."""
-from engine.match import MatchEngine
-from engine.duel import DuelSystem
-from engine.utils import calculate_team_strength, set_random_seed
+# engine package initializer
+# Nie importujemy nic "na siłę", żeby uniknąć pętli/cieniowania błędów importu.
+# Eksporty trzymamy leniwie — konsument i tak używa: `from engine.match import MatchEngine`
 
-__all__ = ['MatchEngine', 'DuelSystem', 'calculate_team_strength', 'set_random_seed']
+__all__ = [
+    "match",
+    "events",
+    "duel",
+    "fatigue",
+    "config",
+    "utils",
+    "comments",
+]
