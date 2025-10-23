@@ -1,5 +1,25 @@
 from __future__ import annotations
 import random
+from typing import Dict
+
+
+def format_names(text: str, context: Dict[str, str]) -> str:
+    """
+    Zamienia {name}, {att}, {def} na dostarczone w kontekście.
+    Braki zastępuje neutralnymi słowami i usuwa pozostawione klamry.
+    """
+    rep = {
+        'name': context.get('name') or context.get('att') or 'zawodnik',
+        'att': context.get('att') or 'atakujący',
+        'def': context.get('def') or 'obrońca',
+    }
+    out = text or ''
+    for k, v in rep.items():
+        out = out.replace('{' + k + '}', str(v))
+    if '{' in out or '}' in out:
+        import re as _re
+        out = _re.sub(r"[{}]", "", out)
+    return out
 
 
 class Commentary:

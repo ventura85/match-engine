@@ -37,7 +37,7 @@ class TeamStats:
     # xG (prosty agregat, jeśli liczysz)
     xg: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
 
@@ -163,3 +163,60 @@ class MatchStats:
         d["team_a"]["duels_total"] = self.team_a.duels_total
         d["team_b"]["duels_total"] = self.team_b.duels_total
         return d
+
+
+def _collect_events(engine: Any) -> list[dict]:
+    evs: list[dict] = []
+    try:
+        raw = getattr(engine, "_events", None)
+        if isinstance(raw, list):
+            for e in raw:
+                if isinstance(e, dict):
+                    evs.append({
+                        "minute": int(e.get("minute", 1) or 1),
+                        "type": e.get("kind", e.get("type", "info")),
+                        "text": e.get("text", ""),
+                    })
+    except Exception:
+        pass
+    return evs
+
+
+def export(engine: Any, seed: int | None = None, out_dir: str = "out") -> dict[str, str]:
+    from pathlib import Path
+    import json
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    sid = str(seed) if seed is not None else 'na'
+
+    # NDJSON
+    ndjson_path = out / f"match_{sid}.ndjson"
+    events = _collect_events(engine)
+    with ndjson_path.open('w', encoding='utf-8') as f:
+        for i, e in enumerate(events, start=1):
+            rec = {
+                "seq": i,
+                "sim_min": int(e.get("minute", 1) or 1),
+                "rt_ms": None,
+                "type": str(e.get("type", "info")),
+                "team_id": None,
+                "actors": [],
+                "payload": {"text": e.get("text", "")},
+            }
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+    # STATS JSON (skrót)
+    stats_path = out / f"stats_{sid}.json"
+    data = {
+        "team_a": getattr(getattr(engine, 'team_a', None), 'name', 'A'),
+        "team_b": getattr(getattr(engine, 'team_b', None), 'name', 'B'),
+        "shots_a": getattr(getattr(engine, 'stats', None), 'shots_a', 0),
+        "shots_b": getattr(getattr(engine, 'stats', None), 'shots_b', 0),
+        "yellows_a": getattr(getattr(engine, 'stats', None), 'yellows_a', 0),
+        "yellows_b": getattr(getattr(engine, 'stats', None), 'yellows_b', 0),
+        "goals_a": len(getattr(getattr(engine, 'stats', None), 'goals_a', []) or []),
+        "goals_b": len(getattr(getattr(engine, 'stats', None), 'goals_b', []) or []),
+    }
+    with stats_path.open('w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    return {"ndjson": str(ndjson_path), "stats": str(stats_path)}
