@@ -106,6 +106,9 @@ def print_match_report(report: Dict, *, timeline_mode: str = "all", timeline_lim
     # ⬇️ ZMIANA: Pojedynki z totals (fallback na same 'won' gdyby ktoś odpalił starszy match.py)
     duels_tot_a = st.get('duels_total_a', st.get('duels_won_a', 0))
     duels_tot_b = st.get('duels_total_b', st.get('duels_won_b', 0))
+    # xG (prosty agregat)
+    xg_a = st.get('xg_a', report.get('xg_a', 0.0))
+    xg_b = st.get('xg_b', report.get('xg_b', 0.0))
     print(f"\n   Pojedynki (wygrane/łącznie):\n      {report['team_a']}: {st['duels_won_a']}/{duels_tot_a}\n      {report['team_b']}: {st['duels_won_b']}/{duels_tot_b}")
     print(f"\n   Stałe fragmenty:\n      Rogi: {report['team_a']}: {st['corners_a']}  |  {report['team_b']}: {st['corners_b']}\n      Wolne: {report['team_a']}: {st['freekicks_a']}  |  {report['team_b']}: {st['freekicks_b']}\n      Karne: {report['team_a']}: {st['penalties_a']}  |  {report['team_b']}: {st['penalties_b']}")
     print(f"\n   Faule i kartki:\n      Faule: {report['team_a']}: {st['fouls_a']}  |  {report['team_b']}: {st['fouls_b']}\n      Żółte: {report['team_a']}: {st['yellows_a']}  |  {report['team_b']}: {st['yellows_b']}\n      Czerwone: {report['team_a']}: {st['reds_a']}  |  {report['team_b']}: {st['reds_b']}")
@@ -169,6 +172,11 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--referee", type=str, default="random", choices=["random","lenient","neutral","strict"], help="Profil sędziego: random/lenient/neutral/strict")
     p.add_argument("--timeline", type=str, default="all", choices=["all","last","key","nomicro"], help="Tryb wyświetlania timeline w CLI")
     p.add_argument("--timeline-limit", type=int, default=120, help="Limit zdarzeń dla trybu 'last'")
+    # Zapis JSON raportu (domyślnie włączony)
+    p.add_argument("--save-json", dest="save_json", type=lambda v: str(v).lower() not in ("0", "false", "no"), default=True,
+                   help="Czy zapisać raport do pliku JSON (domyślnie True)")
+    p.add_argument("--json-path", type=str, default=str((Path("out") / "last_report.json").resolve()),
+                   help="Ścieżka docelowa pliku JSON (domyślnie out/last_report.json)")
     return p.parse_args()
 
 def main() -> None:
@@ -212,6 +220,14 @@ def main() -> None:
         pass
     report = engine.simulate_match()
     print_match_report(report, timeline_mode=args.timeline, timeline_limit=args.timeline_limit)
+    # Zapis JSON (jeśli włączony)
+    try:
+        if bool(getattr(args, 'save_json', True)):
+            out_path = Path(getattr(args, 'json_path', str(Path('out')/ 'last_report.json')))
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     main()

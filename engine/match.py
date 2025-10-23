@@ -20,6 +20,9 @@ class MatchStats:
     shots_on_a: int = 0
     shots_b: int = 0
     shots_on_b: int = 0
+    # xG agregaty (prosty model raportowy)
+    xg_a: float = 0.0
+    xg_b: float = 0.0
     corners_a: int = 0
     corners_b: int = 0
     freekicks_a: int = 0
@@ -67,6 +70,8 @@ class MatchEngine:
         self.substitutions: List[Dict] = []
         # Licznik dostępnych zmian na zespół (na potrzeby testów)
         self._subs_left: Dict[str, int] = {self.team_a.name: 3, self.team_b.name: 3}
+        # Flaga ostatniego wygranego pojedynku per team (do heurystyki xG)
+        self._last_duel_win_minute: Dict[str, int] = {self.team_a.name: 0, self.team_b.name: 0}
 
     def _add_event(self, minute: int, kind: str, text: str) -> None:
         self._events.append({"kind": kind, "text": text, "minute": minute})
@@ -88,153 +93,15 @@ class MatchEngine:
             self._simulate_minute(2, minute)
         self._add_event(90, "final_whistle", "Koniec meczu!")
         return self._build_report()
-        # użyj API _simulate_minute dla kompatybilności z testami
-        for minute in range(1, 46):
-            self._simulate_minute(1, minute)
-        for minute in range(46, total_minutes + 1):
-            if minute in (60, 75):
-                self._maybe_substitution(minute, self.team_a)
-                self._maybe_substitution(minute, self.team_b)
-            self._simulate_minute(2, minute)
-        self._add_event(90, "final_whistle", "Koniec meczu!")
-        return self._build_report()
-        # poniżej stara ścieżka (nieużywana, zostawiona dla referencji)
-        for minute in range(1, total_minutes + 1):
-            # proste okienka zmian (jeśli skład > 11)
-            if minute in (60, 75):
-                self._maybe_substitution(minute, self.team_a)
-                self._maybe_substitution(minute, self.team_b)
-            # posiadanie (prosty dryf)
-            if self._rng.random() < 0.5:
-                self.possession_a_ticks += 1
-                attacker = self.team_a
-                defender = self.team_b
-            else:
-                self.possession_b_ticks += 1
-                attacker = self.team_b
-                defender = self.team_a
-            roll = self._rng.random()
-            # faul (rzadko)
-            if roll < 0.06:
-                self._simulate_foul(minute, attacker, defender)
-            # pojedynek (średnio)
-            elif roll < 0.18:
-                self._simulate_duel(minute, attacker, defender)
-            # SFG (rzut rożny / wolny / karny)
-            elif roll < 0.26:
-                self._simulate_set_piece(minute, attacker, defender)
-            # akcja/strzał
-            elif roll < 0.52:
-                shooter = self._rng.choice(attacker.players).name if attacker.players else "Zawodnik"
-                on_target = self._rng.random() < 0.60
-                if attacker is self.team_a:
-                    self.stats.shots_a += 1
-                    if on_target: self.stats.shots_on_a += 1
-                else:
-                    self.stats.shots_b += 1
-                    if on_target: self.stats.shots_on_b += 1
-                goal = on_target and (self._rng.random() < 0.18)
-                if goal:
-                    if attacker is self.team_a:
-                        self.stats.goals_a.append((minute, shooter, None))
-                    else:
-                        self.stats.goals_b.append((minute, shooter, None))
-                    self._add_event(minute, "goal", f"{minute}' - GOL! {attacker.name}! Strzelec: {shooter}")
-                else:
-                    if on_target:
-                        self._add_event(minute, "shot_on_target", f"{minute}' - {shooter} celnie — dobra interwencja bramkarza!")
-                    else:
-                        self._add_event(minute, "shot_off_target", f"{minute}' - {shooter} niecelnie!")
-            # Fatigue tick + injuries (proste)
-            try:
-                ctx = FatigueContext(minute=minute, team_in_possession=attacker, defending_team=defender)
-                active_a = attacker.players[:min(11, len(attacker.players))]
-                active_b = defender.players[:min(11, len(defender.players))]
-                apply_fatigue_tick(active_a, active_b, ctx)
-                # injuries (bardzo rzadko): po 1 kandydacie na zespół
-                if active_a and self._rng.random() < 0.01:
-                    vic = self._rng.choice(active_a)
-                    evt = maybe_injury(vic, minute, attacker, strict_ref=False, opponent_high_press=False)
-                    if evt and evt.requires_sub:
-                        self._add_event(minute, "injury", f"{minute}' - Kontuzja! {vic.name} schodzi z urazem ({evt.type})")
-                        name = attacker.name
-                        if self._subs_left.get(name, 0) > 0:
-                            self._subs_left[name] -= 1
-                if active_b and self._rng.random() < 0.01:
-                    vic2 = self._rng.choice(active_b)
-                    evt2 = maybe_injury(vic2, minute, defender, strict_ref=False, opponent_high_press=False)
-                    if evt2 and evt2.requires_sub:
-                        self._add_event(minute, "injury", f"{minute}' - Kontuzja! {vic2.name} schodzi z urazem ({evt2.type})")
-                        name = defender.name
-                        if self._subs_left.get(name, 0) > 0:
-                            self._subs_left[name] -= 1
-            except Exception:
-                pass
-
-            # RT
-            if self.real_time:
-                time.sleep((self.real_minutes_target * 60.0) / TOTAL_SIM_MINUTES)
-        # koniec
-        self._add_event(90, "final_whistle", "Koniec meczu!")
-        return self._build_report()
 
     # API kompatybilne z testami: pojedyncza minuta (half/minute)
     def _simulate_minute(self, half: int, minute: int) -> None:
-        # uproszczona logika jak w pętli simulate_match
-        attacker = self.team_a if (self._rng.random() < 0.5) else self.team_b
-        defender = self.team_b if attacker is self.team_a else self.team_a
-        roll = self._rng.random()
-        # zlicz posiadanie
-        if attacker is self.team_a:
-            self.possession_a_ticks += 1
-        else:
-            self.possession_b_ticks += 1
-        if roll < 0.06:
-            self._simulate_foul_internal(minute, attacker, defender)
-        elif roll < 0.18:
-            self._simulate_duel_internal(minute, attacker, defender)
-        elif roll < 0.26:
-            self._simulate_set_piece_internal(minute, attacker, defender)
-        elif roll < 0.52:
-            shooter = self._rng.choice(attacker.players).name if attacker.players else "Zawodnik"
-            on_target = self._rng.random() < 0.60
-            if attacker is self.team_a:
-                self.stats.shots_a += 1
-                if on_target: self.stats.shots_on_a += 1
-            else:
-                self.stats.shots_b += 1
-                if on_target: self.stats.shots_on_b += 1
-            goal = on_target and (self._rng.random() < 0.18)
-            if goal:
-                if attacker is self.team_a:
-                    self.stats.goals_a.append((minute, shooter, None))
-                else:
-                    self.stats.goals_b.append((minute, shooter, None))
-                self._add_event(minute, "goal", f"{minute}' - GOL! {attacker.name}! Strzelec: {shooter}")
-            else:
-                if on_target:
-                    self._add_event(minute, "shot_on_target", f"{minute}' - {shooter} celnie - dobra interwencja bramkarza!")
-                else:
-                    self._add_event(minute, "shot_off_target", f"{minute}' - {shooter} niecelnie!")
-        # fatigue/injury tick
+        # delegacja do modułu minute_simulator
         try:
-            ctx = FatigueContext(minute=minute, team_in_possession=attacker, defending_team=defender)
-            active_a = attacker.players[:min(11, len(attacker.players))]
-            active_b = defender.players[:min(11, len(defender.players))]
-            apply_fatigue_tick(active_a, active_b, ctx)
-            # kontuzje: tylko redukcja slotów, bez eventów
-            if active_a:
-                v1 = self._rng.choice(active_a)
-                evt1 = maybe_injury(v1, minute, attacker, strict_ref=False, opponent_high_press=False)
-                if evt1 and evt1.requires_sub and self._subs_left.get(attacker.name, 0) > 0:
-                    self._subs_left[attacker.name] -= 1
-            if active_b:
-                v2 = self._rng.choice(active_b)
-                evt2 = maybe_injury(v2, minute, defender, strict_ref=False, opponent_high_press=False)
-                if evt2 and evt2.requires_sub and self._subs_left.get(defender.name, 0) > 0:
-                    self._subs_left[defender.name] -= 1
+            from .minute_simulator import simulate_minute as _sim_min
+            _sim_min(self, half, minute)
         except Exception:
-            pass
+            return
 
     def _maybe_substitution(self, minute: int, team: Team) -> None:
         # jeśli nie ma ławki – pomiń
@@ -276,6 +143,70 @@ class MatchEngine:
         if not pool:
             pool = team.players or []
         return self._rng.choice(pool) if pool else Player(id=0, name='Napastnik', position='FWD', attributes={})
+
+    def _simulate_duel_internal_new(self, minute: int, attacker: Team, defender: Team) -> None:
+        # Wyznacz graczy biorących udział w pojedynku
+        att = self._rng.choice(attacker.players) if attacker.players else None
+        dff = self._rng.choice(defender.players) if defender.players else None
+        if not att or not dff:
+            return
+        res = self.duels.resolve_random_duel(att, dff, attacker, defender)
+        # zlicz total (pojedynczy pojedynek zwiększa łączną liczbę po obu stronach)
+        self.stats.duels_total_a += 1
+        self.stats.duels_total_b += 1
+        # Zwycięzca pojedynku: strzał lub 'win' -> atakujący; 'lose' -> broniący
+        if (res.get("type") == "shot") or (res.get("outcome") == "win"):
+            if attacker is self.team_a:
+                self.stats.duels_won_a += 1
+                self._last_duel_win_minute[self.team_a.name] = minute
+            else:
+                self.stats.duels_won_b += 1
+                self._last_duel_win_minute[self.team_b.name] = minute
+        elif res.get("outcome") == "lose":
+            if defender is self.team_a:
+                self.stats.duels_won_a += 1
+                self._last_duel_win_minute[self.team_a.name] = minute
+            else:
+                self.stats.duels_won_b += 1
+                self._last_duel_win_minute[self.team_b.name] = minute
+        # Strzał w wyniku pojedynku: statystyki + xG + ewentualny gol
+        if res.get("type") == "shot":
+            on_target = bool(res.get("on_target"))
+            if attacker is self.team_a:
+                self.stats.shots_a += 1
+                if on_target:
+                    self.stats.shots_on_a += 1
+            else:
+                self.stats.shots_b += 1
+                if on_target:
+                    self.stats.shots_on_b += 1
+            # xG heurystyka
+            base = 0.08
+            if on_target:
+                base += 0.06
+            last_win = self._last_duel_win_minute.get(attacker.name, 0)
+            if last_win and (minute - last_win) <= 10:
+                base += 0.08
+            if (minute % 5) == 0:
+                base += 0.10
+            shot_xg = max(0.02, min(0.40, base))
+            if attacker is self.team_a:
+                self.stats.xg_a += shot_xg
+            else:
+                self.stats.xg_b += shot_xg
+            # outcome
+            shot_outcome = res.get("shot_outcome")
+            if shot_outcome == "goal":
+                scorer = getattr(att, 'name', 'Zawodnik')
+                if attacker is self.team_a:
+                    self.stats.goals_a.append((minute, scorer, None))
+                else:
+                    self.stats.goals_b.append((minute, scorer, None))
+                self._add_event(minute, "goal", f"{minute}' - GOL! {attacker.name}! Strzelec: {scorer}")
+            elif shot_outcome == "saved":
+                self._add_event(minute, "shot_on_target", f"{minute}' - {getattr(att,'name','Zawodnik')} celnie - dobra interwencja bramkarza!")
+            else:
+                self._add_event(minute, "shot_off_target", f"{minute}' - {getattr(att,'name','Zawodnik')} niecelnie!")
 
     def _simulate_duel_internal(self, minute: int, attacker: Team, defender: Team) -> None:
         # Wybierz losowych graczy (prosto)
@@ -323,7 +254,7 @@ class MatchEngine:
             self._add_event(minute, "corner", f"{minute}' - Rzut rożny dla {attacker.name}!")
             # szansa na strzał po rogu
             if self._rng.random() < 0.35:
-                self._simulate_duel_internal(minute, attacker, defender)
+                self._simulate_duel_internal_new(minute, attacker, defender)
         elif r < 0.95:
             # rzut wolny
             if attacker is self.team_a: self.stats.freekicks_a += 1
@@ -438,6 +369,7 @@ class MatchEngine:
                 "possession_a": pos_a, "possession_b": pos_b,
                 "shots_a": self.stats.shots_a, "shots_on_a": self.stats.shots_on_a,
                 "shots_b": self.stats.shots_b, "shots_on_b": self.stats.shots_on_b,
+                "xg_a": round(self.stats.xg_a, 2), "xg_b": round(self.stats.xg_b, 2),
                 "duels_won_a": self.stats.duels_won_a, "duels_won_b": self.stats.duels_won_b,
                 "duels_total_a": self.stats.duels_total_a, "duels_total_b": self.stats.duels_total_b,
                 "fouls_a": self.stats.fouls_a, "fouls_b": self.stats.fouls_b,
@@ -447,6 +379,8 @@ class MatchEngine:
                 "freekicks_a": self.stats.freekicks_a, "freekicks_b": self.stats.freekicks_b,
                 "penalties_a": self.stats.penalties_a, "penalties_b": self.stats.penalties_b,
             },
+            "xg_a": round(self.stats.xg_a, 2),
+            "xg_b": round(self.stats.xg_b, 2),
             "player_stats": {
                 self.team_a.name: build_player_stats(self.team_a),
                 self.team_b.name: build_player_stats(self.team_b),
