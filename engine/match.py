@@ -2,6 +2,7 @@
 import random
 import time
 from dataclasses import dataclass, field
+import copy as _copy
 from typing import Dict, List, Tuple, Optional
 
 from models.team import Team
@@ -10,6 +11,7 @@ from engine.fatigue import apply_fatigue_tick, FatigueContext, halftime_regen
 from engine.injury import maybe_injury
 from engine.duel import DuelSystem
 from engine.comments_repo_mvp import CommentsRepoMVP
+from engine.commentary import CommentaryComposer
 from engine.comments import format_names
 
 # Eksportowane stałe (używane w main.py)
@@ -47,8 +49,9 @@ class MatchStats:
 class MatchEngine:
     def __init__(self, team_a: Team, team_b: Team, *, verbose: bool = False, real_time: bool = False,
                  real_minutes_target: int = DEFAULT_REAL_MINUTES, density: str = "high", referee_profile: str = "random") -> None:
-        self.team_a = team_a
-        self.team_b = team_b
+        # Izoluj stan wejściowy – pracuj na głębokich kopiach drużyn
+        self.team_a = _copy.deepcopy(team_a)
+        self.team_b = _copy.deepcopy(team_b)
         self.verbose = verbose
         self.real_time = real_time
         self.real_minutes_target = max(2, min(30, int(real_minutes_target)))
@@ -80,11 +83,30 @@ class MatchEngine:
             self._comments = CommentsRepoMVP(lang='pl', pack='pl_fun')
             self._comments.rng = _rnd.Random(12345)
             self._comments.load()
+            # Globalny cooldown komentarzy
+            self._commentary = CommentaryComposer(repo=self._comments, global_cooldown=4)
         except Exception:
             self._comments = None
+            self._commentary = None
 
-    def _add_event(self, minute: int, kind: str, text: str) -> None:
-        self._events.append({"kind": kind, "text": text, "minute": minute})
+    def _award_freekick(self, team: str, minute: int, reason: str | None = None) -> None:
+        """
+        Atomowo: emisja eventu przyznania wolnego + inkrement statystyk.
+
+        Event: kind="freekick_awarded" z tagiem team oraz opisem.
+        Stat: freekicks_a/b zwiększane dokładnie w tym miejscu.
+        """
+        if team == self.team_a.name:
+            self.stats.freekicks_a += 1
+        elif team == self.team_b.name:
+            self.stats.freekicks_b += 1
+        msg = f"{minute}' - Przyznany rzut wolny dla {team}!"
+        if reason:
+            msg += f" ({reason})"
+        self._add_event(minute, "freekick_awarded", msg, team=team)
+
+    def _add_event(self, minute: int, kind: str, text: str, team: str | None = "") -> None:
+        self._events.append({"kind": kind, "text": text, "minute": minute, "team": team or ""})
         if self.verbose:
             print(text)
 
@@ -256,11 +278,11 @@ class MatchEngine:
                     self.stats.goals_a.append((minute, scorer, None))
                 else:
                     self.stats.goals_b.append((minute, scorer, None))
-                self._add_event(minute, "goal", f"{minute}' - GOL! {attacker.name}! Strzelec: {scorer}")
+                self._add_event(minute, "goal", f"{minute}' - GOL! {attacker.name}! Strzelec: {scorer}", team=attacker.name)
             elif shot_outcome == "saved":
-                self._add_event(minute, "shot_on_target", f"{minute}' - {getattr(att,'name','Zawodnik')} celnie — dobra interwencja bramkarza!")
+                self._add_event(minute, "shot_on_target", f"{minute}' - {getattr(att,'name','Zawodnik')} celnie — dobra interwencja bramkarza!", team=attacker.name)
             else:
-                self._add_event(minute, "shot_off_target", f"{minute}' - {getattr(att,'name','Zawodnik')} niecelnie!")
+                self._add_event(minute, "shot_off_target", f"{minute}' - {getattr(att,'name','Zawodnik')} niecelnie!", team=attacker.name)
 
     def _simulate_set_piece_internal(self, minute: int, attacker: Team, defender: Team) -> None:
         r = self._rng.random()
@@ -268,14 +290,13 @@ class MatchEngine:
             # rzut rożny
             if attacker is self.team_a: self.stats.corners_a += 1
             else: self.stats.corners_b += 1
-            self._add_event(minute, "corner", f"{minute}' - Rzut rożny dla {attacker.name}!")
+            self._add_event(minute, "corner", f"{minute}' - Rzut rożny dla {attacker.name}!", team=attacker.name)
             # szansa na strzał po rogu
             if self._rng.random() < 0.35:
                 self._simulate_duel_internal_new(minute, attacker, defender)
         elif r < 0.95:
-            # rzut wolny
-            if attacker is self.team_a: self.stats.freekicks_a += 1
-            else: self.stats.freekicks_b += 1
+            # rzut wolny — zliczaj TYLKO przy przyznaniu
+            self._award_freekick(attacker.name, minute, reason="set_piece")
             # szansa na gol bezpośredni
             if self._rng.random() < 0.07:
                 scorer = self._rng.choice(attacker.players).name if attacker.players else "Zawodnik"
@@ -283,33 +304,32 @@ class MatchEngine:
                     self.stats.goals_a.append((minute, scorer, None))
                 else:
                     self.stats.goals_b.append((minute, scorer, None))
-                self._add_event(minute, "goal", f"{minute}' - GOL! {attacker.name}! Strzelec: {scorer} (rzut wolny)")
+                self._add_event(minute, "goal", f"{minute}' - GOL! {attacker.name}! Strzelec: {scorer} (rzut wolny)", team=attacker.name)
             else:
-                self._add_event(minute, "freekick", f"{minute}' - Rzut wolny dla {attacker.name}")
+                self._add_event(minute, "freekick", f"{minute}' - Rzut wolny dla {attacker.name}", team=attacker.name)
         else:
             # karny
             if attacker is self.team_a: self.stats.penalties_a += 1
             else: self.stats.penalties_b += 1
-            self._add_event(minute, "penalty_awarded", f"{minute}' - Jest jedenastka dla {attacker.name}!")
+            self._add_event(minute, "penalty_awarded", f"{minute}' - Jest jedenastka dla {attacker.name}!", team=attacker.name)
             taker = self._rng.choice(attacker.players).name if attacker.players else "Zawodnik"
             if self._rng.random() < 0.78:
                 if attacker is self.team_a:
                     self.stats.goals_a.append((minute, taker, None))
                 else:
                     self.stats.goals_b.append((minute, taker, None))
-                self._add_event(minute, "goal", f"{minute}' - GOL! {attacker.name}! Strzelec: {taker} (karny)")
+                self._add_event(minute, "goal", f"{minute}' - GOL! {attacker.name}! Strzelec: {taker} (karny)", team=attacker.name)
             else:
-                self._add_event(minute, "penalty_miss", f"{minute}' - Karny zmarnowany! {taker}")
+                self._add_event(minute, "penalty_miss", f"{minute}' - Karny zmarnowany! {taker}", team=attacker.name)
 
     def _simulate_foul_internal(self, minute: int, attacker: Team, defender: Team) -> None:
         # zlicz faule
         if defender is self.team_a: self.stats.fouls_a += 1
         else: self.stats.fouls_b += 1
-        # komentarz do faulu -> rzut wolny dla atakujących
-        try:
-            self._emit_commentary(minute, 'freekick', {'team': attacker.name, 'minute': minute}, final_kind='freekick')
-        except Exception:
-            pass
+        # Przyznaj rzut wolny dla atakujących (awarded-only semantics)
+        self._award_freekick(attacker.name, minute, reason="foul")
+        # Deterministyczny wpis o wolnym (bez zależności od repo)
+        self._add_event(minute, 'freekick', f"{minute}' - Rzut wolny dla {attacker.name}", team=attacker.name)
         # wybór „ukaranego” obrońcy
         booked_obj = self._pick_defender(defender)
         # mentalne wpływy
@@ -329,22 +349,24 @@ class MatchEngine:
         if self._rng.random() < p_dr:
             if defender is self.team_a: self.stats.reds_a += 1
             else: self.stats.reds_b += 1
-            self._add_event(minute, "red_card", f"{minute}' - Czerwona kartka dla {booked_obj.name}")
+            self._add_event(minute, "red_card", f"{minute}' - Czerwona kartka dla {booked_obj.name}", team=defender.name)
             return
         if self._rng.random() < p_y:
             if defender is self.team_a: self.stats.yellows_a += 1
             else: self.stats.yellows_b += 1
-            self._add_event(minute, "yellow", f"{minute}' - Żółta kartka dla {booked_obj.name}")
+            self._add_event(minute, "yellow", f"{minute}' - Żółta kartka dla {booked_obj.name}", team=defender.name)
 
     def _emit_commentary(self, minute: int, outcome_key: str, context: Dict[str, str], final_kind: str) -> None:
         repo = getattr(self, '_comments', None)
         # Buildup: 1 linia z 'announce' (deterministycznie)
         if repo is not None:
             try:
-                txt = repo.pick('announce', **context) or ''
+                # Jeżeli dostępny globalny kompozytor komentarzy – użyj go
+                picker = getattr(self, '_commentary', None) or repo
+                txt = picker.pick('announce', **context) or ''
                 txt = format_names(txt, context)
                 if txt:
-                    self._add_event(minute, 'micro', f"{minute}' - {txt}")
+                    self._add_event(minute, 'micro', f"{minute}' - {txt}", team=context.get('team',''))
             except Exception:
                 pass
         else:
@@ -354,25 +376,18 @@ class MatchEngine:
         outcome_txt = ''
         if repo is not None:
             try:
-                outcome_txt = repo.pick(outcome_key, **context) or ''
+                picker = getattr(self, '_commentary', None) or repo
+                outcome_txt = picker.pick(outcome_key, **context) or ''
             except Exception:
                 outcome_txt = ''
         if not outcome_txt:
-            # Fallbacki, jeśli brak klucza w paczce
+            # Fallbacki, jeśli brak klucza w paczce – deterministyczne (bez globalnego RNG)
             if outcome_key == 'corner':
-                try:
-                    from .comments import Commentary as _C
-                    outcome_txt = _C.corner_for(context.get('team',''))
-                except Exception:
-                    outcome_txt = f"Rzut rożny dla {context.get('team','')}!"
+                outcome_txt = f"Rzut rożny dla {context.get('team','')}!"
             elif outcome_key == 'freekick':
-                try:
-                    from .comments import Commentary as _C
-                    outcome_txt = _C.free_kick()
-                except Exception:
-                    outcome_txt = "Rzut wolny."
+                outcome_txt = "Rzut wolny."
         outcome_txt = format_names(outcome_txt, context)
-        self._add_event(minute, final_kind, f"{minute}' - {outcome_txt}")
+        self._add_event(minute, final_kind, f"{minute}' - {outcome_txt}", team=context.get('team',''))
 
     def _build_report(self) -> Dict:
         def _compress_minute(m: int) -> int:
@@ -395,7 +410,8 @@ class MatchEngine:
                     }
                     k = key_map.get(kind)
                     if k:
-                        txt = repo.pick(k, minute=minute0, team='') or ''
+                        picker = getattr(self, '_commentary', None) or repo
+                        txt = picker.pick(k, minute=minute0, team='') or ''
                         txt = format_names(txt, {'team': '', 'minute': minute0})
                         if txt:
                             desc = f"{minute0}' - {txt}"
@@ -403,7 +419,7 @@ class MatchEngine:
                 pass
             timeline_all.append({
                 "minute": _compress_minute(minute0),
-                "team": "",
+                "team": e.get("team", ""),
                 "event_type": kind,
                 "description": desc,
             })
@@ -448,8 +464,8 @@ class MatchEngine:
             "tactical_impact": {"team_a_style": getattr(self.team_a, 'style', 'balanced'), "team_b_style": getattr(self.team_b, 'style', 'balanced')},
             "stats": {
                 "possession_a": pos_a, "possession_b": pos_b,
-                "shots_a": self.stats.shots_a, "shots_on_a": self.stats.shots_on_a,
-                "shots_b": self.stats.shots_b, "shots_on_b": self.stats.shots_on_b,
+                "shots_a": self.stats.shots_a, "shots_on_target_a": self.stats.shots_on_a,
+                "shots_b": self.stats.shots_b, "shots_on_target_b": self.stats.shots_on_b,
                 "xg_a": round(self.stats.xg_a, 2), "xg_b": round(self.stats.xg_b, 2),
                 "duels_won_a": self.stats.duels_won_a, "duels_won_b": self.stats.duels_won_b,
                 "duels_total_a": self.stats.duels_total_a, "duels_total_b": self.stats.duels_total_b,

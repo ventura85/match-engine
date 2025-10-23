@@ -20,7 +20,7 @@ def build_report(engine: Any) -> Dict:
     for e in getattr(engine, '_events', []) or []:
         timeline.append({
             'minute': _compress_minute(int(e.get('minute', 1))),
-            'team': '',
+            'team': e.get('team', ''),
             'event_type': e.get('kind', 'info'),
             'description': e.get('text', ''),
         })
@@ -46,7 +46,7 @@ def build_report(engine: Any) -> Dict:
 
     pos_a = round(100 * engine.possession_a_ticks / max(1, engine.possession_a_ticks + engine.possession_b_ticks), 1)
     pos_b = round(100 - pos_a, 1)
-    return {
+    rep = {
         'team_a': engine.team_a.name,
         'team_b': engine.team_b.name,
         'score': (score_a, score_b),
@@ -65,8 +65,8 @@ def build_report(engine: Any) -> Dict:
         'tactical_impact': {'team_a_style': getattr(engine.team_a, 'style', 'balanced'), 'team_b_style': getattr(engine.team_b, 'style', 'balanced')},
         'stats': {
             'possession_a': pos_a, 'possession_b': pos_b,
-            'shots_a': engine.stats.shots_a, 'shots_on_a': engine.stats.shots_on_a,
-            'shots_b': engine.stats.shots_b, 'shots_on_b': engine.stats.shots_on_b,
+            'shots_a': engine.stats.shots_a, 'shots_on_target_a': engine.stats.shots_on_a,
+            'shots_b': engine.stats.shots_b, 'shots_on_target_b': engine.stats.shots_on_b,
             'xg_a': round(engine.stats.xg_a, 2), 'xg_b': round(engine.stats.xg_b, 2),
             'duels_won_a': engine.stats.duels_won_a, 'duels_won_b': engine.stats.duels_won_b,
             'duels_total_a': engine.stats.duels_total_a, 'duels_total_b': engine.stats.duels_total_b,
@@ -84,4 +84,20 @@ def build_report(engine: Any) -> Dict:
             engine.team_b.name: build_player_stats(engine.team_b),
         },
     }
-
+    # Pewność pól freekicks_* i ewentualna migracja aliasów
+    try:
+        st = rep.get('stats') or {}
+        # migracja potencjalnych legacy kluczy (np. frees_*)
+        if 'frees_a' in st and 'freekicks_a' not in st:
+            st['freekicks_a'] = int(st.get('frees_a', 0) or 0)
+            st.pop('frees_a', None)
+        if 'frees_b' in st and 'freekicks_b' not in st:
+            st['freekicks_b'] = int(st.get('frees_b', 0) or 0)
+            st.pop('frees_b', None)
+        # domyślne 0 jeśli brak
+        st.setdefault('freekicks_a', int(getattr(getattr(engine, 'stats', None), 'freekicks_a', 0) or 0))
+        st.setdefault('freekicks_b', int(getattr(getattr(engine, 'stats', None), 'freekicks_b', 0) or 0))
+        rep['stats'] = st
+    except Exception:
+        pass
+    return rep

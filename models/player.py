@@ -55,6 +55,21 @@ class Player:
         energy_modifier = self.energy
         
         return base_overall * form_modifier * energy_modifier
+
+    @property
+    def overall(self) -> float:
+        """Źródło prawdy dla Overall w całym projekcie.
+
+        Zwraca wynik metody obliczeniowej `get_overall_rating()`.
+        Wszędzie poza modelami/algorytmami należy odwoływać się do
+        `player.overall`, a nie lokalnie liczyć średnie.
+        """
+        return self.get_overall_rating()
+
+    # Alias pomocniczy zgodny z kanonem nazw w projekcie
+    def get_overall(self) -> float:
+        """Alias do `get_overall_rating()` dla wygody/zgodności."""
+        return self.get_overall_rating()
     
     def _calculate_category_average(self, category: str) -> float:
         """Oblicza średnią z danej kategorii atrybutów."""

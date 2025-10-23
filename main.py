@@ -25,18 +25,13 @@ def render_lineups(team_a: Team, team_b: Team) -> None:
     print("⚽ SKŁADY DRUŻYN ⚽")
     print("=" * 80 + "\n")
 
-    def _mean(d: Dict[str, float]) -> float:
-        return sum(d.values()) / max(1, len(d)) if d else 0.0
-
-    def ov(p: Player) -> str:
+    def safe_overall(p: Player) -> str:
         try:
-            attrs = getattr(p, "attributes", {}) or {}
-            ph = attrs.get("physical", {}) or {}
-            te = attrs.get("technical", {}) or {}
-            me = attrs.get("mental", {}) or {}
-            avg = 0.5 * _mean(ph) + 0.35 * _mean(te) + 0.15 * _mean(me)
-            avg *= getattr(p, "form", 1.0) * getattr(p, "energy", 1.0)
-            return f"{avg:.1f}"
+            val = getattr(p, "overall", None)
+            if val is None:
+                # Fallback na metodę obliczeniową, jeśli brak property
+                val = p.get_overall_rating()
+            return f"{float(val):.1f}"
         except Exception:
             return "?"
 
@@ -61,7 +56,7 @@ def render_lineups(team_a: Team, team_b: Team) -> None:
                 traits = ", ".join(getattr(pl, "traits", [])[:2]) if getattr(pl, "traits", None) else ""
                 traits_txt = f" | Cechy: {traits}" if traits else ""
                 print(
-                    f"      # {pl.name:<22} | Overall: {ov(pl):>5} | Forma: {getattr(pl,'form',1.0):.2f}{traits_txt}"
+                    f"      # {pl.name:<22} | Overall: {safe_overall(pl)} | Forma: {getattr(pl,'form',1.0):.2f}{traits_txt}"
                 )
             print()
 
@@ -116,18 +111,40 @@ def load_teams() -> Dict[str, Team]:
     return teams
 
 
+def _migrate_stats_keys(report: Dict) -> None:
+    """Migrator statystyk: shots_on_a/b -> shots_on_target_a/b (usuwa stare klucze).
+
+    Modyfikuje podany słownik raportu in-place, jeśli znajdzie legacy klucze.
+    """
+    try:
+        st = report.get("stats") or {}
+        if "shots_on_a" in st and "shots_on_target_a" not in st:
+            st["shots_on_target_a"] = st.get("shots_on_a", 0)
+            st.pop("shots_on_a", None)
+        if "shots_on_b" in st and "shots_on_target_b" not in st:
+            st["shots_on_target_b"] = st.get("shots_on_b", 0)
+            st.pop("shots_on_b", None)
+        report["stats"] = st
+    except Exception:
+        pass
+
+
 def print_match_report(report: Dict, *, timeline_mode: str = "all", timeline_limit: int = 120) -> None:
+    # Ujednolicenie kluczy statystyk zanim wyświetlimy
+    _migrate_stats_keys(report)
     print("\n" + "=" * 70)
     print(f"RAPORT Z MECZU: {report['team_a']} vs {report['team_b']}")
     print("=" * 70 + "\n")
     print(f"📊 WYNIK KOŃCOWY: {report['team_a']} {report['score_a']} - {report['score_b']} {report['team_b']}\n")
 
-    if report["goals_a"] or report["goals_b"]:
+    goals_a = report.get("goals_a", [])
+    goals_b = report.get("goals_b", [])
+    if goals_a or goals_b:
         print("⚽ BRAMKI:")
-        for g in report["goals_a"]:
+        for g in goals_a:
             assist = f" (asysta: {g['assist']})" if g["assist"] else ""
             print(f"   {report['team_a']}: {g['minute']}' {g['scorer']}{assist}")
-        for g in report["goals_b"]:
+        for g in goals_b:
             assist = f" (asysta: {g['assist']})" if g["assist"] else ""
             print(f"   {report['team_b']}: {g['minute']}' {g['scorer']}{assist}")
     else:
@@ -138,8 +155,10 @@ def print_match_report(report: Dict, *, timeline_mode: str = "all", timeline_lim
     print(
         f"   Posiadanie piłki:\n      {report['team_a']}: {st['possession_a']}%\n      {report['team_b']}: {st['possession_b']}%"
     )
+    shots_on_a = st.get("shots_on_target_a", st.get("shots_on_a", 0))
+    shots_on_b = st.get("shots_on_target_b", st.get("shots_on_b", 0))
     print(
-        f"\n   Strzały:\n      {report['team_a']}: {st['shots_a']} ({st['shots_on_a']} celnych)\n      {report['team_b']}: {st['shots_b']} ({st['shots_on_b']} celnych)"
+        f"\n   Strzały:\n      {report['team_a']}: {st['shots_a']} ({shots_on_a} celnych)\n      {report['team_b']}: {st['shots_b']} ({shots_on_b} celnych)"
     )
 
     # Pojedynki (z totals; fallback na same 'won' gdyby ktoś odpalił starszy match.py)
@@ -268,6 +287,20 @@ def parse_args() -> argparse.Namespace:
         default=str((Path("out") / "last_report.json").resolve()),
         help="Ścieżka docelowa pliku JSON (domyślnie out/last_report.json)",
     )
+    # NDJSON debug
+    p.add_argument(
+        "--save-ndjson",
+        dest="save_ndjson",
+        type=lambda v: str(v).lower() not in ("0", "false", "no"),
+        default=False,
+        help="Czy zapisać strumień zdarzeń do NDJSON (domyślnie False)",
+    )
+    p.add_argument(
+        "--ndjson-path",
+        type=str,
+        default=str((Path("out") / "last_events.jsonl").resolve()),
+        help="Ścieżka pliku NDJSON (domyślnie out/last_events.jsonl)",
+    )
     return p.parse_args()
 
 
@@ -328,6 +361,23 @@ def main() -> None:
             out_path = Path(getattr(args, "json_path", str(Path("out") / "last_report.json")))
             out_path.parent.mkdir(parents=True, exist_ok=True)
             out_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+    # Zapis NDJSON events_full (jeśli włączony)
+    try:
+        if bool(getattr(args, "save_ndjson", False)):
+            nd_path = Path(getattr(args, "ndjson_path", str(Path("out") / "last_events.jsonl")))
+            nd_path.parent.mkdir(parents=True, exist_ok=True)
+            events_src = report.get("events_full") or report.get("events") or []
+            with nd_path.open("w", encoding="utf-8") as f:
+                for ev in events_src:
+                    rec = {
+                        "minute": int(ev.get("minute", 1) or 1),
+                        "type": ev.get("event_type", ev.get("type", "info")),
+                        "team": ev.get("team", ""),
+                    }
+                    f.write(json.dumps(rec, ensure_ascii=False) + "\n")
     except Exception:
         pass
 
