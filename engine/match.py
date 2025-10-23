@@ -9,6 +9,8 @@ from models.player import Player
 from engine.fatigue import apply_fatigue_tick, FatigueContext, halftime_regen
 from engine.injury import maybe_injury
 from engine.duel import DuelSystem
+from engine.comments_repo_mvp import CommentsRepoMVP
+from engine.comments import format_names
 
 # Eksportowane stałe (używane w main.py)
 TOTAL_SIM_MINUTES = 90
@@ -72,6 +74,14 @@ class MatchEngine:
         self._subs_left: Dict[str, int] = {self.team_a.name: 3, self.team_b.name: 3}
         # Flaga ostatniego wygranego pojedynku per team (do heurystyki xG)
         self._last_duel_win_minute: Dict[str, int] = {self.team_a.name: 0, self.team_b.name: 0}
+        # Repo komentarzy (oddzielny RNG, by nie wpływać na przebieg symulacji)
+        try:
+            import random as _rnd
+            self._comments = CommentsRepoMVP(lang='pl', pack='pl_fun')
+            self._comments.rng = _rnd.Random(12345)
+            self._comments.load()
+        except Exception:
+            self._comments = None
 
     def _add_event(self, minute: int, kind: str, text: str) -> None:
         self._events.append({"kind": kind, "text": text, "minute": minute})
@@ -194,19 +204,26 @@ class MatchEngine:
                 self.stats.xg_a += shot_xg
             else:
                 self.stats.xg_b += shot_xg
-            # outcome
+            # outcome z komentarzem
             shot_outcome = res.get("shot_outcome")
+            ctx = {
+                'name': getattr(att, 'name', 'Zawodnik'),
+                'att': getattr(att, 'name', 'Zawodnik'),
+                'def': getattr(dff, 'name', 'Obrońca'),
+                'team': attacker.name,
+                'minute': minute,
+            }
             if shot_outcome == "goal":
                 scorer = getattr(att, 'name', 'Zawodnik')
                 if attacker is self.team_a:
                     self.stats.goals_a.append((minute, scorer, None))
                 else:
                     self.stats.goals_b.append((minute, scorer, None))
-                self._add_event(minute, "goal", f"{minute}' - GOL! {attacker.name}! Strzelec: {scorer}")
+                self._emit_commentary(minute, 'goal', ctx, final_kind='goal')
             elif shot_outcome == "saved":
-                self._add_event(minute, "shot_on_target", f"{minute}' - {getattr(att,'name','Zawodnik')} celnie - dobra interwencja bramkarza!")
+                self._emit_commentary(minute, 'shot_saved', ctx, final_kind='shot_on_target')
             else:
-                self._add_event(minute, "shot_off_target", f"{minute}' - {getattr(att,'name','Zawodnik')} niecelnie!")
+                self._emit_commentary(minute, 'shot_off', ctx, final_kind='shot_off_target')
 
     def _simulate_duel_internal(self, minute: int, attacker: Team, defender: Team) -> None:
         # Wybierz losowych graczy (prosto)
@@ -288,6 +305,11 @@ class MatchEngine:
         # zlicz faule
         if defender is self.team_a: self.stats.fouls_a += 1
         else: self.stats.fouls_b += 1
+        # komentarz do faulu -> rzut wolny dla atakujących
+        try:
+            self._emit_commentary(minute, 'freekick', {'team': attacker.name, 'minute': minute}, final_kind='freekick')
+        except Exception:
+            pass
         # wybór „ukaranego” obrońcy
         booked_obj = self._pick_defender(defender)
         # mentalne wpływy
@@ -314,20 +336,79 @@ class MatchEngine:
             else: self.stats.yellows_b += 1
             self._add_event(minute, "yellow", f"{minute}' - Żółta kartka dla {booked_obj.name}")
 
+    def _emit_commentary(self, minute: int, outcome_key: str, context: Dict[str, str], final_kind: str) -> None:
+        repo = getattr(self, '_comments', None)
+        # Buildup: 1 linia z 'announce' (deterministycznie)
+        if repo is not None:
+            try:
+                txt = repo.pick('announce', **context) or ''
+                txt = format_names(txt, context)
+                if txt:
+                    self._add_event(minute, 'micro', f"{minute}' - {txt}")
+            except Exception:
+                pass
+        else:
+            # bez repo nie emitujemy buildupu (komentarze tylko z repo)
+            pass
+        # Outcome line
+        outcome_txt = ''
+        if repo is not None:
+            try:
+                outcome_txt = repo.pick(outcome_key, **context) or ''
+            except Exception:
+                outcome_txt = ''
+        if not outcome_txt:
+            # Fallbacki, jeśli brak klucza w paczce
+            if outcome_key == 'corner':
+                try:
+                    from .comments import Commentary as _C
+                    outcome_txt = _C.corner_for(context.get('team',''))
+                except Exception:
+                    outcome_txt = f"Rzut rożny dla {context.get('team','')}!"
+            elif outcome_key == 'freekick':
+                try:
+                    from .comments import Commentary as _C
+                    outcome_txt = _C.free_kick()
+                except Exception:
+                    outcome_txt = "Rzut wolny."
+        outcome_txt = format_names(outcome_txt, context)
+        self._add_event(minute, final_kind, f"{minute}' - {outcome_txt}")
+
     def _build_report(self) -> Dict:
         def _compress_minute(m: int) -> int:
             # mapuj 1..90 -> 1..10, pomijaj 0
             if m < 1:
                 return 1
             return min(10, int((m - 1) * 10 / TOTAL_SIM_MINUTES) + 1)
-        timeline: List[Dict] = []
+        timeline_all: List[Dict] = []
         for e in self._events:
-            timeline.append({
-                "minute": _compress_minute(int(e.get("minute", 1))),
+            kind = e.get("kind", "info")
+            minute0 = int(e.get("minute", 1))
+            desc = e.get("text", "")
+            # Wymóg: komentarze z repo – podmień treść dla wybranych rodzajów
+            try:
+                repo = getattr(self, '_comments', None)
+                if repo is not None:
+                    key_map = {
+                        'corner': 'corner_wasted',
+                        'freekick': 'freekick',
+                    }
+                    k = key_map.get(kind)
+                    if k:
+                        txt = repo.pick(k, minute=minute0, team='') or ''
+                        txt = format_names(txt, {'team': '', 'minute': minute0})
+                        if txt:
+                            desc = f"{minute0}' - {txt}"
+            except Exception:
+                pass
+            timeline_all.append({
+                "minute": _compress_minute(minute0),
                 "team": "",
-                "event_type": e.get("kind", "info"),
-                "description": e.get("text", ""),
+                "event_type": kind,
+                "description": desc,
             })
+        # W raporcie 'events' pomijamy mikro-linie, pełny zapis w 'events_full'
+        timeline = [ev for ev in timeline_all if ev["event_type"] != "micro"]
         score_a = len(self.stats.goals_a)
         score_b = len(self.stats.goals_b)
         goals_combined = (
@@ -359,7 +440,7 @@ class MatchEngine:
             "shots": {self.team_a.name: self.stats.shots_a, self.team_b.name: self.stats.shots_b},
             "shots_on_target": {self.team_a.name: self.stats.shots_on_a, self.team_b.name: self.stats.shots_on_b},
             "events": timeline,
-            "events_full": timeline,
+            "events_full": timeline_all,
             "goals": goals_combined,
             "goals_a": [{"minute": m, "scorer": s, "assist": a} for (m, s, a) in self.stats.goals_a],
             "goals_b": [{"minute": m, "scorer": s, "assist": a} for (m, s, a) in self.stats.goals_b],
@@ -390,3 +471,7 @@ class MatchEngine:
 YELLOW_PROB = 0.27
 SECOND_YELLOW_TO_RED_PROB = 0.25
 DIRECT_RED_PROB = 0.03
+
+
+
+

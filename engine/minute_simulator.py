@@ -57,12 +57,12 @@ def simulate_minute(engine: Any, half: int, minute: int) -> None:
                 engine.stats.goals_a.append((minute, shooter, None))
             else:
                 engine.stats.goals_b.append((minute, shooter, None))
-            engine._add_event(minute, "goal", f"{minute}' - GOL! {attacker.name}! Strzelec: {shooter}")
+            engine._emit_commentary(minute, 'goal', {'name': shooter, 'att': shooter, 'def': '', 'team': attacker.name, 'minute': minute}, final_kind='goal')
         else:
             if on_target:
-                engine._add_event(minute, "shot_on_target", f"{minute}' - {shooter} celnie - dobra interwencja bramkarza!")
+                engine._emit_commentary(minute, 'shot_saved', {'name': shooter, 'att': shooter, 'def': '', 'team': attacker.name, 'minute': minute}, final_kind='shot_on_target')
             else:
-                engine._add_event(minute, "shot_off_target", f"{minute}' - {shooter} niecelnie!")
+                engine._emit_commentary(minute, 'shot_off', {'name': shooter, 'att': shooter, 'def': '', 'team': attacker.name, 'minute': minute}, final_kind='shot_off_target')
     # fatigue/injury tick
     try:
         from engine.fatigue import apply_fatigue_tick, FatigueContext
@@ -84,4 +84,3 @@ def simulate_minute(engine: Any, half: int, minute: int) -> None:
                 engine._subs_left[defender.name] -= 1
     except Exception:
         pass
-
