@@ -39,10 +39,38 @@ const nf2 = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 2 });
 const pct = v => `${nf.format(v)}%`;
 const clamp01 = v => Math.max(0, Math.min(100, v));
 
+// Helpers: NDJSON/Download/Fingerprint
+function toNdjson(report) {
+  const events = (report?.eventsFull ?? []).map(e => JSON.stringify(e));
+  return events.join('\n');
+}
+
+function download(filename, text) {
+  const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function fingerprint(report) {
+  const evs = report?.events ?? [];
+  const basis = evs.map(e => `${e.minute}|${e.type}|${e.team}`).join('\n');
+  const enc = new TextEncoder();
+  const data = enc.encode(basis);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  const bytes = new Uint8Array(hash);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export default function App() {
   const [teams, setTeams] = useState([]);
-  const [teamA, setTeamA] = useState('Red');
-  const [teamB, setTeamB] = useState('Blue');
+  const [teamA, setTeamA] = useState(''); // preset id
+  const [teamB, setTeamB] = useState(''); // preset id
   const [seed, setSeed] = useState(42);
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -50,7 +78,16 @@ export default function App() {
   const [mode, setMode] = useState('key'); // 'key' | 'full'
 
   useEffect(() => {
-    fetchTeams().then(setTeams).catch(e => setErr(String(e)));
+    fetchTeams()
+      .then(data => {
+        const arr = Array.isArray(data) ? data : [];
+        setTeams(arr);
+        if (arr.length > 0) {
+          setTeamA(arr[0].id);
+          setTeamB((arr[1]?.id) ?? arr[0].id);
+        }
+      })
+      .catch(e => setErr(String(e)));
   }, []);
 
   const possA = report ? (report.stats?.possessionA ?? 0) : 0;
@@ -81,7 +118,7 @@ export default function App() {
 
   async function run() {
     setLoading(true); setErr(null);
-    try { setReport(await simulate(seed, teamA, teamB)); }
+    try { setReport(await simulate(Number(seed) || 42, teamA, teamB)); }
     catch (e) { setErr(String(e)); }
     finally { setLoading(false); }
   }
@@ -91,14 +128,22 @@ export default function App() {
       <h1>{'\u26BD'} Match Engine {'\u2013'} MVP</h1>
 
       <div className="toolbar">
-        <label>Team A{' '} 
+        <label>Team A{' '}
           <select value={teamA} onChange={e=>setTeamA(e.target.value)}>
-            {teams.map(t => <option key={t} value={t}>{t}</option>)}
+            {teams.map(t => (
+              <option key={t.id || t.name} value={t.id}>
+                {t.name} {'\u2014'} {t.formation} {'\u00B7'} {t.style}
+              </option>
+            ))}
           </select>
         </label>
-        <label>Team B{' '} 
+        <label>Team B{' '}
           <select value={teamB} onChange={e=>setTeamB(e.target.value)}>
-            {teams.map(t => <option key={t} value={t}>{t}</option>)}
+            {teams.map(t => (
+              <option key={t.id || t.name} value={t.id}>
+                {t.name} {'\u2014'} {t.formation} {'\u00B7'} {t.style}
+              </option>
+            ))}
           </select>
         </label>
         <label>Seed{' '} 
@@ -109,6 +154,35 @@ export default function App() {
           <button className={mode==='key'?'on':''} onClick={()=>setMode('key')}>Skr{`\u00F3`}t</button>
           <button className={mode==='full'?'on':''} onClick={()=>setMode('full')}>Pe{`\u0142`}na</button>
         </div>
+        {report && (
+          <div className="export">
+            <button onClick={() => navigator.clipboard.writeText(JSON.stringify(report)).catch(()=>{})}>
+              Kopiuj JSON
+            </button>
+            <button onClick={() => {
+              const sanitize = s => String(s ?? '').replace(/[^a-z0-9-_]+/gi, '_');
+              const fn = `report_${sanitize(report.teamA)}_vs_${sanitize(report.teamB)}_seed${String(seed)}.json`;
+              download(fn, JSON.stringify(report));
+            }}>
+              Pobierz JSON
+            </button>
+            <button onClick={() => {
+              const sanitize = s => String(s ?? '').replace(/[^a-z0-9-_]+/gi, '_');
+              const fn = `report_${sanitize(report.teamA)}_vs_${sanitize(report.teamB)}_seed${String(seed)}.ndjson`;
+              download(fn, toNdjson(report));
+            }}>
+              Pobierz NDJSON
+            </button>
+            <button onClick={async () => {
+              try {
+                const fp = await fingerprint(report);
+                await navigator.clipboard.writeText(fp);
+              } catch { /* noop */ }
+            }}>
+              Kopiuj fingerprint
+            </button>
+          </div>
+        )}
       </div>
 
       {err && <div className="error">B{`\u0142`}{`\u0105`}d: {err}</div>}
@@ -152,7 +226,7 @@ export default function App() {
             <h3>Chronologia (skr{`\u00F3`}t)</h3>
             <div className="events">
               {evs.map((e, i) => (
-                <div key={i} className="event">
+                <div key={`${e.minute}-${e.type}-${e.team}-${i}`} className="event">
                   <div className="min">{e.minute}'</div>
                   <div>
                     <span className="badge" style={{marginRight:8}}>
@@ -170,4 +244,3 @@ export default function App() {
     </div>
   );
 }
-

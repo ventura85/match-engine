@@ -1,0 +1,21 @@
+{
+  "id": "blue-433-balanced",
+  "name": "Blue",
+  "formation": "4-3-3",
+  "style": "balanced",
+  "attackBias": "mixed",
+  "players": [
+    { "id": "blue-gk-1", "name": "Andrzej Baran", "role": "GK", "overall": 64, "stamina": 0.70, "workRate": 0.54, "composure": 0.62 },
+    { "id": "blue-fb-1", "name": "Marek Czarnecki", "role": "FB", "overall": 68, "stamina": 0.77, "workRate": 0.70, "composure": 0.60 },
+    { "id": "blue-cb-1", "name": "Wojciech Król", "role": "CB", "overall": 67, "stamina": 0.74, "workRate": 0.60, "composure": 0.63 },
+    { "id": "blue-cb-2", "name": "Damian Lis", "role": "CB", "overall": 67, "stamina": 0.73, "workRate": 0.61, "composure": 0.62 },
+    { "id": "blue-fb-2", "name": "Patryk Zając", "role": "FB", "overall": 69, "stamina": 0.78, "workRate": 0.71, "composure": 0.61 },
+    { "id": "blue-cm-1", "name": "Filip Duda", "role": "CM", "overall": 70, "stamina": 0.79, "workRate": 0.73, "composure": 0.64 },
+    { "id": "blue-cm-2", "name": "Kacper Mazur", "role": "CM", "overall": 71, "stamina": 0.80, "workRate": 0.74, "composure": 0.65 },
+    { "id": "blue-cm-3", "name": "Oskar Michalak", "role": "CM", "overall": 71, "stamina": 0.81, "workRate": 0.75, "composure": 0.66 },
+    { "id": "blue-w-1", "name": "Hubert Sowa", "role": "W", "overall": 72, "stamina": 0.82, "workRate": 0.77, "composure": 0.66 },
+    { "id": "blue-w-2", "name": "Emil Pietrzak", "role": "W", "overall": 72, "stamina": 0.82, "workRate": 0.77, "composure": 0.66 },
+    { "id": "blue-st-1", "name": "Bartosz Urban", "role": "ST", "overall": 73, "stamina": 0.83, "workRate": 0.78, "composure": 0.67 }
+  ]
+}
+

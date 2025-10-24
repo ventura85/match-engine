@@ -81,6 +81,9 @@ public static class MinuteSimulator
         {
             var foulTeam = aHasBall ? s.B.Name : s.A.Name; // defending team fouls
             full.Add(new Event(s.Minute, EventType.FoulCommitted, foulTeam));
+            // Count fouls per team if attributable
+            if (foulTeam == s.A.Name) st.FoulsA++;
+            else if (foulTeam == s.B.Name) st.FoulsB++;
             if (rngCards.NextDouble() < 0.25)
             {
                 full.Add(new Event(s.Minute, EventType.YellowCard, foulTeam));

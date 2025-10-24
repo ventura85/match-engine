@@ -7,6 +7,8 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-
 .toolbar select, .toolbar input { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
 .toolbar button { padding: 9px 14px; border: 1px solid var(--line); border-radius: 10px; background: #111; color: #fff; cursor: pointer; }
 .toolbar button:disabled { opacity: .6; cursor: default; }
+/* export tools to the right */
+.export { margin-left: auto; display: inline-flex; gap: 8px; flex-wrap: wrap; }
 
 .grid { display: grid; gap: 12px; }
 @media (min-width: 840px) { .grid { grid-template-columns: 1fr 1fr; } }

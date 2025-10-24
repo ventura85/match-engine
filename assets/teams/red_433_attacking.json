@@ -1,0 +1,21 @@
+{
+  "id": "red-433-attacking",
+  "name": "Red",
+  "formation": "4-3-3",
+  "style": "attacking",
+  "attackBias": "wings",
+  "players": [
+    { "id": "red-gk-1", "name": "Jan Kowalski", "role": "GK", "overall": 63, "stamina": 0.72, "workRate": 0.55, "composure": 0.60 },
+    { "id": "red-fb-1", "name": "Piotr Lewandowski", "role": "FB", "overall": 70, "stamina": 0.78, "workRate": 0.72, "composure": 0.58 },
+    { "id": "red-cb-1", "name": "Adam Nowak", "role": "CB", "overall": 68, "stamina": 0.75, "workRate": 0.60, "composure": 0.62 },
+    { "id": "red-cb-2", "name": "Kamil Wójcik", "role": "CB", "overall": 69, "stamina": 0.74, "workRate": 0.61, "composure": 0.63 },
+    { "id": "red-fb-2", "name": "Michał Kamiński", "role": "FB", "overall": 71, "stamina": 0.79, "workRate": 0.74, "composure": 0.59 },
+    { "id": "red-cm-1", "name": "Tomasz Zieliński", "role": "CM", "overall": 72, "stamina": 0.80, "workRate": 0.75, "composure": 0.64 },
+    { "id": "red-cm-2", "name": "Paweł Szymański", "role": "CM", "overall": 73, "stamina": 0.82, "workRate": 0.77, "composure": 0.66 },
+    { "id": "red-cm-3", "name": "Krzysztof Wiśniewski", "role": "CM", "overall": 74, "stamina": 0.83, "workRate": 0.78, "composure": 0.67 },
+    { "id": "red-w-1", "name": "Rafał Dudek", "role": "W", "overall": 75, "stamina": 0.84, "workRate": 0.80, "composure": 0.65 },
+    { "id": "red-w-2", "name": "Mateusz Pawlak", "role": "W", "overall": 76, "stamina": 0.85, "workRate": 0.81, "composure": 0.66 },
+    { "id": "red-st-1", "name": "Łukasz Piątek", "role": "ST", "overall": 77, "stamina": 0.86, "workRate": 0.82, "composure": 0.68 }
+  ]
+}
+
