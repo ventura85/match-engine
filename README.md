@@ -1,188 +1,71 @@
-# Football Manager Match Engine ⚽
+⚽ Match Engine — .NET + React
 
-Modułowy silnik meczowy (Python 3.11) do gry MMO/manager, z naciskiem na taktykę, realizm i czytelny raport meczu. Silnik działa w skali 90’ (symulowane natychmiastowo), a na potrzeby testów utrzymuje skróconą oś czasu 1..10.
+Deterministyczny silnik meczu piłkarskiego z lekkim API i przejrzystym frontendem. Budujemy solidną bazę pod grę online: szybki, przewidywalny i łatwy w rozwoju.
 
-## Co potrafi (stan na teraz)
+🎮 Wizja produktu (skrót)
 
-- Model zawodnika: atrybuty fizyczne/techniczne/mentalne; energia i forma wpływają na OVR i przebieg meczu.
-- Taktyka: formacja, styl (defensive/balanced/attacking), kanał ataku (wings/center), pressing (low/normal/high), szerokość (narrow/normal/wide).
-- Pojedynki (Live Action Duels): kluczowe starcia 1v1 z rezultatem shot/goal/saved/wide; poprawne liczenie strzałów celnych.
-- System fauli i kartek: prawdopodobieństwo fauli z taktyki i „agresji” obrońców; żółte/czerwone zależne łagodnie od agresji i decisions zawodnika.
-- Profil sędziego: lenient/neutral/strict z mnożnikami na faule i kartki; profil drukowany w CLI i zapisany w raporcie.
-- Zmiany zawodników: automatyczne suby (60’ i 75’, max 3) przy ławce; wybór najbardziej zmęczonego i rezerwowego tej samej pozycji; wpływ na siłę drużyny.
-- Zmiany taktyczne: podczas przerwy i ok. 70’ zależnie od wyniku (bufory).
-- Zmęczenie i dystans: per‑minuta drenaż energii zależny od pozycji, stylu/pressingu/szerokości/kanału oraz udziału w pojedynkach; raport zawiera `player_stats` (energia i `distance_km`).
-- Komentarze: mikro (tanie) i makro‑narracje; anty‑karuzela rzutów rożnych.
-- Raport: wynik, gole (z asystami), posiadanie, strzały (w tym celne), SFG, faule/kartki, pełny timeline i skrót, profil sędziego, listę zmian, per‑player `distance_km` i energia.
-- Testy: 19 zielonych, w tym deterministyczność (seed), struktura raportu, duels/strzały, kartki i profil sędziego.
+Świat, w którym prawdziwi ludzie grają główne role (Piłkarz, Manager-Właściciel), kluczowe momenty rozstrzygają interaktywne Live Action Duels, a ekonomia, liga i kariery żyją dzięki decyzjom graczy. Nasz silnik meczowy jest sercem tej wizji. 
 
-## Struktura
+Gra piłkarska
 
-```
-.
-├── main.py                 # CLI, druk sędziego, raport, zmiany, dystans
-├── engine/
-│   ├── match.py           # Silnik: pętla 90’, taktyka, SFG, kary, zmęczenie
-│   ├── duel.py            # System pojedynków 1v1
-│   ├── comments*.py       # Komentarze
-│   └── utils.py
-├── models/                # Player/Team
-├── data/teams.json        # Przykładowe drużyny
-├── scripts/               # batch i matrix do kalibracji
-└── tests/                 # testy (pytest)
-```
+🧠 Co budujemy
 
-## Uruchomienie
+Deterministyczny RNG: MT19937 + wydzielone strumienie (np. duels, gk_saves, cards, fatigue, setpieces, xg_context, commentary) — zero „przesuwania” seeda między modułami.
 
-```
-pip install -r requirements.txt
-python main.py --seed 42 --density high --referee random --timeline all
-```
+Modułowa architektura: Domain, Engine (Match, Minute Simulator + sub-modele), RNG, Reporting.
 
-Przydatne flagi:
-- `--teamA/--teamB` – wybór drużyn
-- `--referee` – `random|lenient|neutral|strict`
-- `--verbose` – gęstsze logi
-- `--timeline` – `all|last|key|nomicro` (jak drukować chronologię)
-- `--timeline-limit` – limit zdarzeń dla trybu `last`
+Raporty: stabilny Schema v1 (rozszerzamy pola, nie łamiemy zgodności).
 
-## Batch/Matrix do kalibracji
+API + Front: Minimal APIs (/teams, /simulate) i lekki frontend (wynik, statystyki, timeline, „Skrót/Pełna”).
 
-- `python scripts/run_batch.py` → `reports/batch_stats.csv`
-- `python scripts/run_matrix.py` → `reports/matrix.csv` (8×8 presetów)
+👥 Dane drużyn i graczy — podejście
 
-Analizuj średnie (gole, strzały, faule, kartki, rogi) i koryguj delikatnie stałe w `engine/match.py` jeśli potrzeba.
+Teraz (prosto): presety w kodzie (SeedData) — szybki start.
 
-## Dane zawodników
+Docelowo (zalecane): pliki JSON w assets/teams/ wczytywane repozytorium danych; łatwe PR-y, wersjonowanie i pełna kontrola.
 
-Minimalny blok atrybutów (przykład w `data/teams.json`):
-- Physical: `speed`, `strength`, `stamina`
-- Technical: `passing`, `shooting`, `dribbling`, `tackling`, `marking`, `reflexes`, `handling`
-- Mental: `positioning`, `concentration`, `decisions`, `aggression` (opcjonalnie; domyślnie 50)
+Opcjonalnie później: SQLite pod ten sam interfejs, gdy zechcemy edytować składy z UI.
+👉 Dla deterministyczności trzymamy stałe ID i stabilne sortowanie.
 
-## Oceny pomeczowe (plan)
+🗺️ Roadmap (M3 → M7)
 
-Kolejny etap: per‑player ratings 1–10 z uwzględnieniem goli/asyst, xG proxy, pojedynków, obron GK, fauli/kartek i pracy bez piłki (distance/work‑rate). Zapis w raporcie i druk Top 3.
+M3 — Duels + GK
+Nowe zdarzenia: DuelWon/Lost, SaveMade; liczniki duels*, saves*. Inwariant: celne = gole + interwencje.
 
-## Licencja
+M4 — Sędzia, faule, kartki, SFG
+Profile strict/lenient; zdarzenia: Foul, YellowCard, RedCard, FreekickAwarded, PenaltyAwarded.
 
-Projekt demonstracyjny – swobodny do modyfikacji.
-### Atrybuty (skala 1-99)
-Rekomendowane zakresy:
-- **50-60**: Przeciętny zawodnik
-- **60-75**: Dobry zawodnik
-- **75-85**: Bardzo dobry zawodnik
-- **85-95**: Gwiazda
+M5 — Zmęczenie i energia
+Tick energii, wpływ na intensywność, pojedynki i skuteczność.
 
-## Raport z meczu
+M6 — Stałe fragmenty + xG v2
+Playbooki rożnych/wolnych; kontekstowy xG (dystans, kąt, presja, noga, pozycja GK).
 
-Po symulacji wyświetlany jest szczegółowy raport zawierający:
+M7 — Komentarz i timeline
+Kompozytor z cooldownem, różnorodność fraz (PL), sekcja „Kluczowe zdarzenia”.
 
-1. **Wynik końcowy** z rozbiciem na bramki
-2. **Posiadanie piłki** (%)
-3. **Strzały** (ogółem i celne)
-4. **Analiza taktyczna** - skuteczność strzałów dla każdego stylu gry
-5. **Zmiany** - lista wszystkich zmian z powodami
-6. **Kluczowe zdarzenia** (gole, obrony, drybling)
+📊 Standardy jakości
 
-## API dla programistów
+SchemaVersion = 1 — tylko dodajemy pola.
 
-### Podstawowe użycie w kodzie
+Każdy element losowy = osobny strumień RNG.
 
-```python
-from models.team import Team
-from models.player import Player
-from engine.match import MatchEngine
-from engine.utils import set_random_seed
+Testy: inwarianty, monotoniczność minut (zawsze jest FinalWhistle), testy deterministyczności względem seeda.
 
-# Załaduj drużyny (lub stwórz manualnie)
-team_a = Team(name="Team A", players=[...], formation="4-4-2")
-team_b = Team(name="Team B", players=[...], formation="4-3-3")
+Nazewnictwo: EN w kodzie/DTO, PL w UI.
 
-# Ustaw seed dla powtarzalności (opcjonalnie)
-set_random_seed(42)
+🔧 Jak z tym pracujemy (skrót)
 
-# Utwórz silnik i symuluj (real_time=False dla szybkiej symulacji)
-engine = MatchEngine(team_a, team_b, verbose=True, real_time=False)
-report = engine.simulate_match()
+Backend: .NET Minimal APIs, hot-reload lokalnie; CORS dla frontu.
 
-# Odczytaj wyniki
-print(f"Wynik: {report['score']}")
-print(f"Posiadanie: {report['possession']}")
-print(f"Bramki: {report['goals']}")
-print(f"Zmiany: {report['substitutions']}")
-print(f"Wpływ taktyki: {report['tactical_impact']}")
-```
+Frontend: Vite/React; statystyki, timeline, tryb „Skrót/Pełna”; polskie formaty.
 
-## Rozszerzanie projektu
+CI (w planie): build/test Core + API, build frontu, artefakty, analyzers „warn as error”.
 
-Silnik został zaprojektowany w sposób modułowy, co ułatwia rozbudowę:
+🎯 Cel na teraz
 
-### Zaimplementowane funkcje:
-- ✅ **Zmiany**: System zmian taktycznych podczas przerwy
-- ✅ **Składy przed meczem**: Wyświetlanie pełnych składów z statystykami
-- ✅ **Polski komentarz**: Realistyczne komentarze z emotikonami
-- ✅ **Analiza taktyczna**: Widoczny wpływ stylu gry na wyniki
-- ✅ **10-minutowe mecze**: Szybka symulacja (5+5 min)
+Dostarczyć M3 (pojedynki i interwencje GK) z pełnymi inwariantami i widocznością w UI.
 
-### Możliwe rozszerzenia:
-- 🔄 **Kontuzje**: Losowe kontuzje zawodników podczas meczu
-- 🔄 **Kartki**: Żółte i czerwone kartki z wpływem na grę
-- 🔄 **Pełny system zmian**: Ławka rezerwowych i 3 zmiany na drużynę
-- 🔄 **Zmęczenie**: Dynamiczne zmniejszanie energy podczas meczu
-- 🔄 **Pogoda**: Wpływ warunków pogodowych na grę
-- 🔄 **xG (Expected Goals)**: Zaawansowane metryki skuteczności
-- 🔄 **Heat mapy**: Wizualizacja pozycji zawodników
-- 🔄 **Export**: Eksport raportów do JSON/HTML/PDF
-- 🔄 **Aplikacja webowa**: Interfejs w Streamlit lub Flask
+Wczytywać drużyny z JSON (presetowe pliki w assets/teams/) przez repozytorium danych.
 
-## Testowanie
-
-Projekt zawiera suite 12 testów jednostkowych:
-
-```bash
-pytest -v
-```
-
-Testy sprawdzają:
-- ✅ Powtarzalność wyników (seed)
-- ✅ Poprawność struktury raportu
-- ✅ Walidację wyniku meczu
-- ✅ Obliczanie posiadania piłki
-- ✅ Statystyki strzałów
-- ✅ Wpływ taktyki na wyniki
-- ✅ Czas trwania meczu (10 minut)
-- ✅ Różnorodność wyników bez seeda
-- ✅ Modele Player i Team
-
-## Technologie
-
-- **Python 3.11**
-- **Dataclasses** - dla modeli danych
-- **Type hints** - pełne typowanie
-- **pytest** - framework testowy (12 testów)
-- **Tick-based simulation** - 1 tick = 1 minuta
-- **Probabilistyczny RNG** - kontrolowana losowość
-
-## Wyniki przykładowe
-
-Przykładowe wyniki 5 kolejnych meczy:
-- **Mecz 1**: Blue Hawks 1-0
-- **Mecz 2**: Red Lions 1-0
-- **Mecz 3**: Remis 0-0 (ze zmianą taktyczną)
-- **Mecz 4**: Remis 0-0
-- **Mecz 5**: Remis 1-1
-
-Każdy mecz jest inny! 🎲
-
-## Licencja
-
-Projekt edukacyjny - wolny do użytku i modyfikacji.
-
-## Autorzy
-
-Stworzony jako przykładowy projekt demonstracyjny silnika meczowego dla gry football manager.
-
----
-
-**Dobrej zabawy z symulacją! ⚽🎮**
+Utrzymać pełną deterministyczność i kompatybilny raport v1.
