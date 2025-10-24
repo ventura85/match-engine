@@ -3,6 +3,7 @@ using EngineMatch = MatchEngine.Core.Engine.Match.MatchEngine;
 using MatchEngine.Api.Dtos;
 using Microsoft.Extensions.Configuration;
 using MatchEngine.Core.Engine.Commentary;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +55,10 @@ builder.Services.AddSingleton<CommentaryComposerFactory>(sp =>
     var repo = sp.GetRequiredService<ICommentRepository>();
     return new CommentaryComposerFactory(repo, commentsLocale, commentsTone, cooldown: 6);
 });
+
+// Commentary policy
+var policy = builder.Configuration.GetSection("Commentary").Get<CommentaryPolicy>() ?? new CommentaryPolicy();
+builder.Services.AddSingleton(policy);
 
 var app = builder.Build();
 

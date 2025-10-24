@@ -58,7 +58,7 @@ public sealed class MatchEngine
     {
         var repo = TryCreateDefaultRepo();
         if (repo == null) return;
-        var composer = new CommentaryComposer(_rng.Get("commentary"), repo, locale: "pl", tone: "fun", cooldownSize: 6);
+        var composer = new CommentaryComposer(_rng.Get("commentary"), repo, locale: "pl", tone: "fun", cooldownSize: 6, policy: new CommentaryPolicy());
 
         // map and replace events with descriptions
         for (int i = 0; i < full.Count; i++)
@@ -66,13 +66,24 @@ public sealed class MatchEngine
             var e = full[i];
             if (IsKeyForCommentary(e.Type))
             {
-                var name = e.Type.ToString();
+                var name = EventCatalog.GetName((int)e.Type);
                 var team = e.Team;
                 var opp = team == _a.Name ? _b.Name : team == _b.Name ? _a.Name : string.Empty;
                 var line = composer.Compose(name, e.Minute, team, opp);
                 if (!string.IsNullOrWhiteSpace(line))
                 {
                     full[i] = new Event(e.Minute, e.Type, e.Team, line);
+                }
+            }
+            else
+            {
+                var name = EventCatalog.GetName((int)e.Type);
+                var team = e.Team;
+                var opp = team == _a.Name ? _b.Name : team == _b.Name ? _a.Name : string.Empty;
+                var micro = composer.TryComposeMicro(name, e.Minute, team, opp, i);
+                if (!string.IsNullOrWhiteSpace(micro))
+                {
+                    full[i] = new Event(e.Minute, e.Type, e.Team, micro);
                 }
             }
         }
@@ -83,7 +94,7 @@ public sealed class MatchEngine
             var e = key[i];
             if (IsKeyForCommentary(e.Type))
             {
-                var name = e.Type.ToString();
+                var name = EventCatalog.GetName((int)e.Type);
                 var team = e.Team;
                 var opp = team == _a.Name ? _b.Name : team == _b.Name ? _a.Name : string.Empty;
                 var line = composer.Compose(name, e.Minute, team, opp);

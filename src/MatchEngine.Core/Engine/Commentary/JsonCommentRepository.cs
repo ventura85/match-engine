@@ -24,16 +24,17 @@ public sealed class JsonCommentRepository : ICommentRepository
     {
         if (string.IsNullOrWhiteSpace(locale)) locale = "pl";
         if (string.IsNullOrWhiteSpace(tone)) tone = "neutral";
+        var key = eventType ?? string.Empty;
 
         if (_data.TryGetValue(locale, out var byTone))
         {
-            if (byTone.TryGetValue(tone, out var map) && map.TryGetValue(eventType, out var list) && list.Count > 0)
+            if (byTone.TryGetValue(tone, out var map) && map.TryGetValue(key, out var list) && list.Count > 0)
             {
                 return list;
             }
             // fallback to neutral
             if (!tone.Equals("neutral", StringComparison.OrdinalIgnoreCase) &&
-                byTone.TryGetValue("neutral", out var neut) && neut.TryGetValue(eventType, out var listN) && listN.Count > 0)
+                byTone.TryGetValue("neutral", out var neut) && neut.TryGetValue(key, out var listN) && listN.Count > 0)
             {
                 return listN;
             }
