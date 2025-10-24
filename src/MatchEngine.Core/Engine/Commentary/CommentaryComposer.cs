@@ -19,6 +19,7 @@ public sealed class CommentaryComposer
     private readonly HashSet<int> _microMinutes = new();
     private int _lastMicroEventIndex = int.MinValue;
     private int _seqCounter = -1; // used by TryComposeMicro() overload without index
+    private readonly Dictionary<string, int> _lastEventMinute = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Regex Placeholder = new("\u007B(minute|team|opponent)\u007D", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public CommentaryComposer(RngStream commentaryRng, ICommentRepository repo, string locale = "pl", string tone = "neutral", int cooldownSize = 6, CommentaryPolicy? policy = null)
@@ -33,6 +34,7 @@ public sealed class CommentaryComposer
 
     public string Compose(string eventType, int minute, string team, string opponent)
     {
+        if (!ShouldComment(eventType, minute)) return string.Empty;
         var templates = _repo.Get(_locale, _tone, eventType).ToList();
         if (templates.Count == 0)
         {
@@ -88,23 +90,14 @@ public sealed class CommentaryComposer
 
     public string? TryComposeMicro(string eventType, int minute, string team, string opponent, int eventIndex)
     {
-        double p = eventType switch
-        {
-            "BuildUp" => _policy.BuildUpProb,
-            "FinalThird" => _policy.FinalThirdProb,
-            "DuelWon" => _policy.DuelWonProb,
-            "DuelLost" => _policy.DuelLostProb,
-            _ => -1.0
-        };
-        if (p < 0) return null; // not a micro event
-
-        if (_microMinutes.Contains(minute)) return null; // max per minute enforced for micro
-        if (_lastMicroEventIndex != int.MinValue && eventIndex - _lastMicroEventIndex < _policy.GlobalCooldownEvents)
+        // Not a micro event? bail
+        if (eventType != "BuildUp" && eventType != "FinalThird" && eventType != "DuelWon" && eventType != "DuelLost" && eventType != "Shot")
             return null;
 
-        // probability gate (consume RNG deterministically regardless of outcome)
-        var roll = _rng.NextDouble();
-        if (!(roll < p)) return null;
+        // per-minute cap for micro
+        if (_microMinutes.Contains(minute)) return null;
+        if (_lastMicroEventIndex != int.MinValue && eventIndex - _lastMicroEventIndex < _policy.GlobalCooldownEvents) return null;
+        if (!ShouldComment(eventType, minute)) return null;
 
         // select template with cooldown avoidance
         var templates = _repo.Get(_locale, _tone, eventType).ToList();
@@ -149,5 +142,16 @@ public sealed class CommentaryComposer
                 _ => m.Value
             };
         });
+    }
+
+    private bool ShouldComment(string eventType, int minute)
+    {
+        var (rate, cooldown) = _policy.Get(eventType);
+        if (cooldown > 0 && _lastEventMinute.TryGetValue(eventType, out var last) && minute - last < cooldown)
+            return false;
+        // probability gate
+        if (_rng.NextDouble() >= rate) return false;
+        _lastEventMinute[eventType] = minute;
+        return true;
     }
 }

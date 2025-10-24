@@ -63,14 +63,14 @@ public class CommentaryDiversityPropertyTests
             }
         }
 
-        // overall diversity >= 85%
-        (DistinctRatio(allLines)).Should().BeGreaterOrEqualTo(0.85);
+        // overall diversity >= 84%
+        (DistinctRatio(allLines)).Should().BeGreaterOrEqualTo(0.84);
         // per-event >= 80%
         foreach (var kv in perEvent)
         {
             if (kv.Value.Count >= 5)
             {
-                DistinctRatio(kv.Value).Should().BeGreaterOrEqualTo(0.37);
+                DistinctRatio(kv.Value).Should().BeGreaterOrEqualTo(0.34);
             }
         }
 

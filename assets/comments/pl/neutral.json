@@ -17,7 +17,9 @@
     "Szeroko ustawieni — ruch wahadeł.",
     "Gra na ścianę, prosty schemat.",
     "Przygotowanie ataku pozycyjnego.",
-    "Przeniesienie piłki między strefami."
+    "Przeniesienie piłki między strefami.",
+    "Kontrola rytmu w środkowej strefie.",
+    "Przesunięcie na drugą stronę — cierpliwie."
   ],
   "CornerAwarded": [
     "Rzut rożny dla {team}.",
@@ -104,7 +106,9 @@
     "Szukają miejsca między liniami.",
     "Krótka wymiana, spokojne tempo.",
     "Płaskie dośrodkowanie — obrona wybija.",
-    "Zamieszanie w polu karnym — asekuracja."
+    "Zamieszanie w polu karnym — asekuracja.",
+    "Wejście w pole karne — tłoczno.",
+    "Krótka wymiana w ataku — przygotowanie strzału."
   ],
   "FinalWhistle": [
     "Koniec meczu.",
@@ -386,6 +390,20 @@
     "Prawą nogą — celny strzał.",
     "Lewą nogą — celnie.",
     "Z półobrotu — w światło."
+  ],
+  "Shot": [
+    "{minute}' — strzał niecelny.",
+    "Uderzenie obok słupka.",
+    "Strzał nad poprzeczką.",
+    "Z dystansu — nie w światło.",
+    "Próba z pierwszej — obok.",
+    "Techniczne uderzenie — niecelne.",
+    "Płaski strzał — minął bramkę.",
+    "Główka niecelna.",
+    "Po rykoszecie — nadal poza.",
+    "Z pola karnego — obok.",
+    "Lekki strzał — obok bramki.",
+    "Mocno, ale niecelnie."
   ],
   "YellowCard": [
     "Żółta kartka.",

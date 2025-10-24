@@ -17,7 +17,9 @@
     "Rozszerzają pole gry, wahadła wysoko.",
     "Zagranie na ścianę i ruch w tempo.",
     "Otwierają korytarz, wciągają rywala.",
-    "Spokojny oddech przed przyspieszeniem." 
+    "Spokojny oddech przed przyspieszeniem.",
+    "Cierpliwe kiwanie zegara — kontrola.",
+    "Piłka chodzi jak po sznurku — bez paniki."
   ],
   "CornerAwarded": [
     "Strzał zablokowany — będzie róg dla {team}.",
@@ -104,7 +106,9 @@
     "Dokręca do środka — defensorzy przyspieszają.",
     "Wycofanie na szesnasty — próba z dystansu?",
     "Gęsto pod bramką — jeden błysk wystarczy.",
-    "Rozsypał się pressing — jest wejście w szesnastkę."
+    "Rozsypał się pressing — jest wejście w szesnastkę.",
+    "Wejście w pole — zagęszczają szesnastkę.",
+    "Ostatni drybling przed strzałem — napięcie rośnie."
   ],
   "FinalWhistle": [
     "Końcówka i robi się gęsto — wszyscy liczą sekundy.",
@@ -386,6 +390,20 @@
     "Szybka klepka i strzał — celny.",
     "Zewnętrzną częścią stopy — w światło.",
     "Finezyjny rogal — bramkarz gotowy."
+  ],
+  "Shot": [
+    "{minute}' — strzał obok, szkoda precyzji.",
+    "Uderzenie z dystansu — minimalnie obok.",
+    "Próba z pierwszej — nie trafia czysto.",
+    "Zewnętrzną częścią — piłka mija słupek.",
+    "Hak na dalszy — niewiele zabrakło.",
+    "Płasko po ziemi — obok bramki.",
+    "Techniczne uderzenie — nie trafia celu.",
+    "Mocny strzał — przeniesiony nad poprzeczką.",
+    "Wolej z pola — piłka nad bramką.",
+    "Główka — nie w światło.",
+    "Lekki rykoszet — nadal obok.",
+    "Z półobrotu — obok słupka."
   ],
   "YellowCard": [
     "Żółta kartka — ostro, ale bez przesady.",
