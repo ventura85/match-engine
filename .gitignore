@@ -9,3 +9,27 @@ coverage.xml
 out/
 *.ndjson
 *.json
+
+# Build artifacts
+bin/
+obj/
+
+# IDE
+.vscode/
+.vs/
+.idea/
+
+# Logs & output
+out/
+logs/
+
+# User-specific
+*.user
+*.suo
+
+# Config overrides
+**/appsettings.Local.json
+
+# Ignore entire legacy Python code folder(s)
+Python/
+python/
