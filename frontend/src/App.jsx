@@ -1,29 +1,32 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { fetchTeams, simulate } from './lib/api';
 import './App.css';
 
+// Icons (Unicode escapes to avoid encoding issues)
 const ICON = {
-  Goal: 'âš˝',
-  ShotOnTarget: 'đźŽŻ',
-  Shot: 'đź’Ą',
-  CornerAwarded: 'â›ł',
-  FreekickAwarded: 'đź§±',
-  PenaltyAwarded: 'âš ď¸Ź',
-  YellowCard: 'đźź¨',
-  RedCard: 'đźźĄ',
-  SaveMade: 'đź§¤',
-  DuelWon: 'đźź˘',
-  DuelLost: 'đź”´',
-  FinalWhistle: 'âŹ±ď¸Ź',
+  Goal: '\u26BD',                // ⚽
+  ShotOnTarget: '\uD83C\uDFAF', // 🎯
+  Shot: '\uD83D\uDCA5',         // 💥
+  CornerAwarded: '\u26F3',       // ⛳
+  FreekickAwarded: '\uD83E\uDDF1', // 🧱
+  PenaltyAwarded: '\u26A0\uFE0F',  // ⚠️
+  YellowCard: '\uD83D\uDFE8',   // 🟨
+  RedCard: '\uD83D\uDFE5',      // 🟥
+  SaveMade: '\uD83E\uDDE4',     // 🧤
+  DuelWon: '\uD83D\uDFE2',      // 🟢
+  DuelLost: '\uD83D\uDD34',     // 🔴
+  FinalWhistle: '\u23F1\uFE0F', // ⏱️
 };
+
+// Polish labels (escaped diacritics to avoid encoding problems)
 const LABELS = {
   Goal: 'Gol',
-  ShotOnTarget: 'StrzaĹ‚ celny',
-  Shot: 'StrzaĹ‚',
-  CornerAwarded: 'Rzut roĹĽny',
+  ShotOnTarget: 'Strza\u0142 celny',
+  Shot: 'Strza\u0142',
+  CornerAwarded: 'Rzut ro\u017Cny',
   FreekickAwarded: 'Rzut wolny',
   PenaltyAwarded: 'Rzut karny',
-  YellowCard: 'Ĺ»ĂłĹ‚ta kartka',
+  YellowCard: '\u017B\u00F3\u0142ta kartka',
   RedCard: 'Czerwona kartka',
   SaveMade: 'Interwencja GK',
   DuelWon: 'Wygrany pojedynek',
@@ -63,16 +66,16 @@ export default function App() {
     if (!report) return [];
     const s = report.stats;
     return [
-      ['Posiadanie %', pct(report.stats.possessionA), pct(report.stats.possessionB)],
-      ['StrzaĹ‚y (celne)', `${s.shotsA} (${s.shotsOnTargetA})`, `${s.shotsB} (${s.shotsOnTargetB})`],
+      ['Posiadanie %', pct(s.possessionA ?? 0), pct(s.possessionB ?? 0)],
+      ['Strza\u0142y (celne)', `${s.shotsA} (${s.shotsOnTargetA})`, `${s.shotsB} (${s.shotsOnTargetB})`],
       ['xG', nf2.format(s.xgA ?? 0), nf2.format(s.xgB ?? 0)],
       ['Rogi', s.cornersA, s.cornersB],
       ['Wolne', s.freekicksA, s.freekicksB],
       ['Karne', s.penaltiesA, s.penaltiesB],
       ['Faule', s.foulsA ?? 0, s.foulsB ?? 0],
-      ['Ĺ»ĂłĹ‚te', s.yellowsA ?? 0, s.yellowsB ?? 0],
+      ['\u017B\u00F3\u0142te', s.yellowsA ?? 0, s.yellowsB ?? 0],
       ['Czerwone', s.redsA ?? 0, s.redsB ?? 0],
-      ['Pojedynki (wygrane/Ĺ‚Ä…cznie)', `${s.duelsWonA ?? 0}/${s.duelsTotalA ?? 0}`, `${s.duelsWonB ?? 0}/${s.duelsTotalB ?? 0}`],
+      ['Pojedynki (wygrane/\u0142\u0105cznie)', `${s.duelsWonA ?? 0}/${s.duelsTotalA ?? 0}`, `${s.duelsWonB ?? 0}/${s.duelsTotalB ?? 0}`],
     ];
   }, [report]);
 
@@ -85,38 +88,38 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1>âš˝ Match Engine â€“ MVP</h1>
+      <h1>{'\u26BD'} Match Engine {'\u2013'} MVP</h1>
 
       <div className="toolbar">
-        <label>Team A:{' '}
+        <label>Team A{' '} 
           <select value={teamA} onChange={e=>setTeamA(e.target.value)}>
             {teams.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </label>
-        <label>Team B:{' '}
+        <label>Team B{' '} 
           <select value={teamB} onChange={e=>setTeamB(e.target.value)}>
             {teams.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </label>
-        <label>Seed:{' '}
+        <label>Seed{' '} 
           <input type="number" value={seed} onChange={e=>setSeed(Number(e.target.value))} style={{width:90}}/>
         </label>
         <button onClick={run} disabled={loading}>Start</button>
         <div className="seg">
-          <button className={mode==='key'?'on':''} onClick={()=>setMode('key')}>SkrĂłt</button>
-          <button className={mode==='full'?'on':''} onClick={()=>setMode('full')}>PeĹ‚na</button>
+          <button className={mode==='key'?'on':''} onClick={()=>setMode('key')}>Skr{`\u00F3`}t</button>
+          <button className={mode==='full'?'on':''} onClick={()=>setMode('full')}>Pe{`\u0142`}na</button>
         </div>
       </div>
 
-      {err && <div className="error">BĹ‚Ä…d: {err}</div>}
-      {loading && <div>Symulacjaâ€¦</div>}
+      {err && <div className="error">B{`\u0142`}{`\u0105`}d: {err}</div>}
+      {loading && <div>Symulacja{`\u2026`}</div>}
 
       {report && (
         <div className="grid">
           <div className="card">
             <h3>Wynik</h3>
             <div className="score">
-              {report.teamA} {report.scoreA} â€“ {report.scoreB} {report.teamB}
+              {report.teamA} {report.scoreA} - {report.scoreB} {report.teamB}
             </div>
             <div className="sub">schema v{report.schemaVersion}</div>
             <div style={{marginTop:12}}>
@@ -146,17 +149,17 @@ export default function App() {
           </div>
 
           <div className="card" style={{gridColumn: '1 / -1'}}>
-            <h3>Chronologia (skrĂłt)</h3>
+            <h3>Chronologia (skr{`\u00F3`}t)</h3>
             <div className="events">
               {evs.map((e, i) => (
                 <div key={i} className="event">
                   <div className="min">{e.minute}'</div>
                   <div>
                     <span className="badge" style={{marginRight:8}}>
-                      {ICON[e.type] ?? 'â€˘'} {LABELS[e.type] ?? e.type}
+                      {ICON[e.type] ?? '*'} {LABELS[e.type] ?? e.type}
                     </span>{' '}
                     <strong>{e.team}</strong>
-                    {e.description ? ` â€” ${e.description}` : ''}
+                    {e.description ? ` \u2014 ${e.description}` : ''}
                   </div>
                 </div>
               ))}
@@ -167,3 +170,4 @@ export default function App() {
     </div>
   );
 }
+
