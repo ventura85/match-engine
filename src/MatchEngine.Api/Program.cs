@@ -1,3 +1,7 @@
+using MatchEngine.Core.Domain.Teams.Presets;
+using EngineMatch = MatchEngine.Core.Engine.Match.MatchEngine;
+using MatchEngine.Api.Dtos;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -18,6 +22,29 @@ var summaries = new[]
 };
 
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
+
+app.MapGet("/teams", () => new[] { "Red", "Blue", "Grey" });
+
+app.MapPost("/simulate", (SimulateRequest req) =>
+{
+    var a = req.TeamA.ToLower() switch
+    {
+        "red" => SeedData.Red_433_Attacking(),
+        "blue" => SeedData.Blue_4141_Balanced(),
+        "grey" => SeedData.Grey_541_Defensive(),
+        _ => SeedData.Red_433_Attacking()
+    };
+    var b = req.TeamB.ToLower() switch
+    {
+        "red" => SeedData.Red_433_Attacking(),
+        "blue" => SeedData.Blue_4141_Balanced(),
+        "grey" => SeedData.Grey_541_Defensive(),
+        _ => SeedData.Blue_4141_Balanced()
+    };
+    var engine = new EngineMatch(a, b, req.Seed);
+    var report = engine.Simulate(90);
+    return Results.Ok(report);
+});
 
 app.MapGet("/weatherforecast", () =>
 {
