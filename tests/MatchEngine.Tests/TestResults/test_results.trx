@@ -1,111 +1,123 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TestRun id="3fbbe5bd-0c9b-4e23-9bab-df97e6633068" name="ventu@DESKTOP-3M0GOB3 2025-10-24 10:00:58" runUser="DESKTOP-3M0GOB3\ventu" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
-  <Times creation="2025-10-24T10:00:58.3529455+02:00" queuing="2025-10-24T10:00:58.3529462+02:00" start="2025-10-24T10:00:57.1683850+02:00" finish="2025-10-24T10:00:58.3894883+02:00" />
-  <TestSettings name="default" id="0d091b63-2fed-484b-b063-6d61448af31b">
-    <Deployment runDeploymentRoot="ventu_DESKTOP-3M0GOB3_2025-10-24_10_00_58" />
+<TestRun id="3917255e-0c12-49d0-a922-f1dfd5c5939b" name="ventu@DESKTOP-3M0GOB3 2025-10-24 10:10:02" runUser="DESKTOP-3M0GOB3\ventu" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2025-10-24T10:10:02.5194907+02:00" queuing="2025-10-24T10:10:02.5194910+02:00" start="2025-10-24T10:10:01.2426007+02:00" finish="2025-10-24T10:10:02.5792262+02:00" />
+  <TestSettings name="default" id="4a82471d-ebf4-473a-8855-7074746f9d73">
+    <Deployment runDeploymentRoot="ventu_DESKTOP-3M0GOB3_2025-10-24_10_10_02" />
   </TestSettings>
   <Results>
-    <UnitTestResult executionId="50cd6396-54f2-4859-9e4b-17b4df780d5c" testId="1dd244f0-73e4-5460-4cff-cdc246b19d11" testName="MatchEngine.Tests.RNG.Mt19937VectorsTests.ReferenceVectors_Seed5489_First10Match" computerName="DESKTOP-3M0GOB3" duration="00:00:00.1578922" startTime="2025-10-24T10:00:58.2564923+02:00" endTime="2025-10-24T10:00:58.2564924+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="50cd6396-54f2-4859-9e4b-17b4df780d5c" />
-    <UnitTestResult executionId="30bddc76-b426-4a2c-9edb-7d041e8f1b7f" testId="42162dfd-48e1-7006-1821-db2160ea5a80" testName="MatchEngine.Tests.Domain.FormationValidationTests.DuplicateStarterIndex_FailsValidation" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0006715" startTime="2025-10-24T10:00:58.3028521+02:00" endTime="2025-10-24T10:00:58.3028521+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="30bddc76-b426-4a2c-9edb-7d041e8f1b7f" />
-    <UnitTestResult executionId="a33855a2-95e9-434b-a87b-2890f9eaa250" testId="f98e7ee9-a1ed-7024-c1a6-270f77f87083" testName="MatchEngine.Tests.Domain.FormationValidationTests.MissingGK_InRoleMap_FailsValidation" computerName="DESKTOP-3M0GOB3" duration="00:00:00.1618350" startTime="2025-10-24T10:00:58.3026932+02:00" endTime="2025-10-24T10:00:58.3026933+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a33855a2-95e9-434b-a87b-2890f9eaa250" />
-    <UnitTestResult executionId="e1f1c485-c454-4835-abaa-bf538142eaa7" testId="d44f3339-dec5-94a1-fa00-13593238b8ea" testName="MatchEngine.Tests.Domain.PlayerOverallTests.Overall_ForST_UsesRoleWeightsAndIsAccurate" computerName="DESKTOP-3M0GOB3" duration="00:00:00.1770717" startTime="2025-10-24T10:00:58.3031215+02:00" endTime="2025-10-24T10:00:58.3031216+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e1f1c485-c454-4835-abaa-bf538142eaa7" />
-    <UnitTestResult executionId="3f299b8b-1f1e-4513-8303-3e4c2e633c58" testId="6dcf93c1-7a34-1679-8aad-2b161e9765f8" testName="MatchEngine.Tests.UnitTest1.Test1" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0000820" startTime="2025-10-24T10:00:58.3023533+02:00" endTime="2025-10-24T10:00:58.3023534+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3f299b8b-1f1e-4513-8303-3e4c2e633c58" />
-    <UnitTestResult executionId="08e97678-264e-407d-b0ca-b5d862f2dd0d" testId="225fb30b-1f26-55f1-b6a8-37cad42929ef" testName="MatchEngine.Tests.Domain.PresetsSmokeTests.Blue4141_Valid" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0004187" startTime="2025-10-24T10:00:58.3030777+02:00" endTime="2025-10-24T10:00:58.3030777+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="08e97678-264e-407d-b0ca-b5d862f2dd0d" />
-    <UnitTestResult executionId="cb6dd499-2c39-4316-b7fe-9f431d0c7543" testId="6bdf13e3-16ea-4b9e-3113-8dd4315638ad" testName="MatchEngine.Tests.RNG.RngStreamsIsolationTests.Streams_IsolatedBetweenNames_AndCachedPerRegistry" computerName="DESKTOP-3M0GOB3" duration="00:00:00.1546662" startTime="2025-10-24T10:00:58.2521773+02:00" endTime="2025-10-24T10:00:58.2522074+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cb6dd499-2c39-4316-b7fe-9f431d0c7543" />
-    <UnitTestResult executionId="2ca7b104-6806-4ad1-86da-d4f50ae85f33" testId="275df028-9568-0bf4-fa43-ed86234f815a" testName="MatchEngine.Tests.Domain.PresetsSmokeTests.Red433_Valid" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0005132" startTime="2025-10-24T10:00:58.3030092+02:00" endTime="2025-10-24T10:00:58.3030093+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2ca7b104-6806-4ad1-86da-d4f50ae85f33" />
-    <UnitTestResult executionId="e52bf61b-6bc9-4ae8-b57c-d81ca7c85236" testId="95a81b1f-287b-e888-a0aa-fbc262bcc14a" testName="MatchEngine.Tests.Domain.FormationValidationTests.ValidMinimalTeam_PassesValidation" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0007387" startTime="2025-10-24T10:00:58.3027776+02:00" endTime="2025-10-24T10:00:58.3027776+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e52bf61b-6bc9-4ae8-b57c-d81ca7c85236" />
-    <UnitTestResult executionId="aa372a43-69d3-4fad-bdc7-234433b1b2b5" testId="2f597487-ce89-e96a-8939-6b72bb278edd" testName="EventsMonotonicityTests.MinutesMonotonicAndFinalWhistleExists" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0427899" startTime="2025-10-24T10:00:58.3032334+02:00" endTime="2025-10-24T10:00:58.3032335+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="aa372a43-69d3-4fad-bdc7-234433b1b2b5" />
-    <UnitTestResult executionId="f1683c4e-9839-4bab-87a9-9a37e617d688" testId="b0ab716c-d885-f778-2018-ccc9a67e4299" testName="MatchEngine.Tests.Domain.PresetsSmokeTests.Grey541_Valid" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0099384" startTime="2025-10-24T10:00:58.3029126+02:00" endTime="2025-10-24T10:00:58.3029127+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f1683c4e-9839-4bab-87a9-9a37e617d688" />
-    <UnitTestResult executionId="d74a0431-8e00-4471-a544-193e5fdcb9e7" testId="ed16d4dc-dfa0-3518-1944-a8befd06b076" testName="InvariantsTests.ShotsAndPossessionAndSetPiecesConsistent" computerName="DESKTOP-3M0GOB3" duration="00:00:00.2054090" startTime="2025-10-24T10:00:58.3052121+02:00" endTime="2025-10-24T10:00:58.3052122+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d74a0431-8e00-4471-a544-193e5fdcb9e7" />
-    <UnitTestResult executionId="e3fabe1d-8eb0-4409-a479-901f6fc7e3da" testId="dfb55a16-6fb0-edf8-172a-bb8dccaa8a20" testName="DeterminismTests.SameSeedSameReport" computerName="DESKTOP-3M0GOB3" duration="00:00:00.2037171" startTime="2025-10-24T10:00:58.3031756+02:00" endTime="2025-10-24T10:00:58.3031756+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e3fabe1d-8eb0-4409-a479-901f6fc7e3da" />
-    <UnitTestResult executionId="c5a88e6d-dcbd-4b19-87ba-3bf957f4f67c" testId="e89800e0-ecfc-de63-1291-3830b3998dc8" testName="MatchEngine.Tests.RNG.RngDeterminismTests.TwoGenerators_SameSeed_ProduceIdenticalSequence" computerName="DESKTOP-3M0GOB3" duration="00:00:00.1584147" startTime="2025-10-24T10:00:58.2570592+02:00" endTime="2025-10-24T10:00:58.2570593+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c5a88e6d-dcbd-4b19-87ba-3bf957f4f67c" />
+    <UnitTestResult executionId="5aa3eca2-46ef-4d8c-9163-0138729fc90b" testId="6bdf13e3-16ea-4b9e-3113-8dd4315638ad" testName="MatchEngine.Tests.RNG.RngStreamsIsolationTests.Streams_IsolatedBetweenNames_AndCachedPerRegistry" computerName="DESKTOP-3M0GOB3" duration="00:00:00.2057666" startTime="2025-10-24T10:10:02.3749513+02:00" endTime="2025-10-24T10:10:02.3749515+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5aa3eca2-46ef-4d8c-9163-0138729fc90b" />
+    <UnitTestResult executionId="7db2eb81-0d1c-4ed0-be83-13c1baa6d2a4" testId="f98e7ee9-a1ed-7024-c1a6-270f77f87083" testName="MatchEngine.Tests.Domain.FormationValidationTests.MissingGK_InRoleMap_FailsValidation" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0033322" startTime="2025-10-24T10:10:02.4334639+02:00" endTime="2025-10-24T10:10:02.4334640+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7db2eb81-0d1c-4ed0-be83-13c1baa6d2a4" />
+    <UnitTestResult executionId="f3b6f063-b940-46e3-a251-a2f8b6dca22c" testId="33294670-ebaf-082d-ca6a-4080f32e0bf9" testName="DuelsCountersTests.DuelsCountersNonNegativeAndConsistent" computerName="DESKTOP-3M0GOB3" duration="00:00:00.2656370" startTime="2025-10-24T10:10:02.4360586+02:00" endTime="2025-10-24T10:10:02.4360587+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f3b6f063-b940-46e3-a251-a2f8b6dca22c" />
+    <UnitTestResult executionId="63645741-7371-4047-9b33-a0a90e4b24e1" testId="1dd244f0-73e4-5460-4cff-cdc246b19d11" testName="MatchEngine.Tests.RNG.Mt19937VectorsTests.ReferenceVectors_Seed5489_First10Match" computerName="DESKTOP-3M0GOB3" duration="00:00:00.2075716" startTime="2025-10-24T10:10:02.3743685+02:00" endTime="2025-10-24T10:10:02.3743688+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="63645741-7371-4047-9b33-a0a90e4b24e1" />
+    <UnitTestResult executionId="04a4cd03-4894-4ad8-900b-41e8e605646e" testId="d44f3339-dec5-94a1-fa00-13593238b8ea" testName="MatchEngine.Tests.Domain.PlayerOverallTests.Overall_ForST_UsesRoleWeightsAndIsAccurate" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0200112" startTime="2025-10-24T10:10:02.4337479+02:00" endTime="2025-10-24T10:10:02.4337479+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="04a4cd03-4894-4ad8-900b-41e8e605646e" />
+    <UnitTestResult executionId="e5dc7ada-4a85-4e25-96a5-3106bbdcc182" testId="e89800e0-ecfc-de63-1291-3830b3998dc8" testName="MatchEngine.Tests.RNG.RngDeterminismTests.TwoGenerators_SameSeed_ProduceIdenticalSequence" computerName="DESKTOP-3M0GOB3" duration="00:00:00.2080671" startTime="2025-10-24T10:10:02.3707274+02:00" endTime="2025-10-24T10:10:02.3707538+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e5dc7ada-4a85-4e25-96a5-3106bbdcc182" />
+    <UnitTestResult executionId="cb5f1897-66eb-46b1-9488-afd886e84072" testId="6dcf93c1-7a34-1679-8aad-2b161e9765f8" testName="MatchEngine.Tests.UnitTest1.Test1" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0001045" startTime="2025-10-24T10:10:02.4332144+02:00" endTime="2025-10-24T10:10:02.4332145+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cb5f1897-66eb-46b1-9488-afd886e84072" />
+    <UnitTestResult executionId="da850f98-4ffe-4dd4-bf55-bdc0e9a35891" testId="56b35c0a-7cc6-c5b3-d76a-feae276118b6" testName="GkSavesInvariantsTests.SavesPlusGoalsEqualShotsOnTarget_PerTeam" computerName="DESKTOP-3M0GOB3" duration="00:00:00.2654417" startTime="2025-10-24T10:10:02.4360041+02:00" endTime="2025-10-24T10:10:02.4360042+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="da850f98-4ffe-4dd4-bf55-bdc0e9a35891" />
+    <UnitTestResult executionId="880ef348-cb85-4d00-8bfd-7b2ba4175273" testId="2f597487-ce89-e96a-8939-6b72bb278edd" testName="EventsMonotonicityTests.MinutesMonotonicAndFinalWhistleExists" computerName="DESKTOP-3M0GOB3" duration="00:00:00.2649742" startTime="2025-10-24T10:10:02.4359455+02:00" endTime="2025-10-24T10:10:02.4359456+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="880ef348-cb85-4d00-8bfd-7b2ba4175273" />
+    <UnitTestResult executionId="119c3d8b-bebf-4019-b87a-7d47425c2854" testId="ed16d4dc-dfa0-3518-1944-a8befd06b076" testName="InvariantsTests.ShotsAndPossessionAndSetPiecesConsistent" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0504044" startTime="2025-10-24T10:10:02.4361138+02:00" endTime="2025-10-24T10:10:02.4361139+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="119c3d8b-bebf-4019-b87a-7d47425c2854" />
+    <UnitTestResult executionId="ba6992cb-02e8-4b1d-a580-bb142d56a139" testId="b0ab716c-d885-f778-2018-ccc9a67e4299" testName="MatchEngine.Tests.Domain.PresetsSmokeTests.Grey541_Valid" computerName="DESKTOP-3M0GOB3" duration="00:00:00.2226965" startTime="2025-10-24T10:10:02.4336264+02:00" endTime="2025-10-24T10:10:02.4336264+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ba6992cb-02e8-4b1d-a580-bb142d56a139" />
+    <UnitTestResult executionId="59538b3a-7de6-4204-89a9-818e5e08ad20" testId="dfb55a16-6fb0-edf8-172a-bb8dccaa8a20" testName="DeterminismTests.SameSeedSameReport" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0521325" startTime="2025-10-24T10:10:02.4337916+02:00" endTime="2025-10-24T10:10:02.4337917+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="59538b3a-7de6-4204-89a9-818e5e08ad20" />
+    <UnitTestResult executionId="46337c28-ce98-43c2-80a8-c2f99ef97649" testId="42162dfd-48e1-7006-1821-db2160ea5a80" testName="MatchEngine.Tests.Domain.FormationValidationTests.DuplicateStarterIndex_FailsValidation" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0007042" startTime="2025-10-24T10:10:02.4335590+02:00" endTime="2025-10-24T10:10:02.4335590+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="46337c28-ce98-43c2-80a8-c2f99ef97649" />
+    <UnitTestResult executionId="7ec0be81-1d24-43a5-b1da-94bb5fa4b9a6" testId="275df028-9568-0bf4-fa43-ed86234f815a" testName="MatchEngine.Tests.Domain.PresetsSmokeTests.Red433_Valid" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0008846" startTime="2025-10-24T10:10:02.4336726+02:00" endTime="2025-10-24T10:10:02.4336726+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7ec0be81-1d24-43a5-b1da-94bb5fa4b9a6" />
+    <UnitTestResult executionId="9e527d9b-eca9-4a73-a95a-38d9b731bc20" testId="95a81b1f-287b-e888-a0aa-fbc262bcc14a" testName="MatchEngine.Tests.Domain.FormationValidationTests.ValidMinimalTeam_PassesValidation" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0004137" startTime="2025-10-24T10:10:02.4335182+02:00" endTime="2025-10-24T10:10:02.4335183+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9e527d9b-eca9-4a73-a95a-38d9b731bc20" />
+    <UnitTestResult executionId="c298efbb-77f1-4865-84e0-faf9e1dd43d7" testId="225fb30b-1f26-55f1-b6a8-37cad42929ef" testName="MatchEngine.Tests.Domain.PresetsSmokeTests.Blue4141_Valid" computerName="DESKTOP-3M0GOB3" duration="00:00:00.0004560" startTime="2025-10-24T10:10:02.4337194+02:00" endTime="2025-10-24T10:10:02.4337195+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c298efbb-77f1-4865-84e0-faf9e1dd43d7" />
   </Results>
   <TestDefinitions>
     <UnitTest name="MatchEngine.Tests.Domain.FormationValidationTests.ValidMinimalTeam_PassesValidation" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="95a81b1f-287b-e888-a0aa-fbc262bcc14a">
-      <Execution id="e52bf61b-6bc9-4ae8-b57c-d81ca7c85236" />
+      <Execution id="9e527d9b-eca9-4a73-a95a-38d9b731bc20" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="MatchEngine.Tests.Domain.FormationValidationTests" name="ValidMinimalTeam_PassesValidation" />
     </UnitTest>
     <UnitTest name="MatchEngine.Tests.Domain.PresetsSmokeTests.Grey541_Valid" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="b0ab716c-d885-f778-2018-ccc9a67e4299">
-      <Execution id="f1683c4e-9839-4bab-87a9-9a37e617d688" />
+      <Execution id="ba6992cb-02e8-4b1d-a580-bb142d56a139" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="MatchEngine.Tests.Domain.PresetsSmokeTests" name="Grey541_Valid" />
     </UnitTest>
     <UnitTest name="MatchEngine.Tests.UnitTest1.Test1" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="6dcf93c1-7a34-1679-8aad-2b161e9765f8">
-      <Execution id="3f299b8b-1f1e-4513-8303-3e4c2e633c58" />
+      <Execution id="cb5f1897-66eb-46b1-9488-afd886e84072" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="MatchEngine.Tests.UnitTest1" name="Test1" />
     </UnitTest>
     <UnitTest name="MatchEngine.Tests.Domain.FormationValidationTests.MissingGK_InRoleMap_FailsValidation" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="f98e7ee9-a1ed-7024-c1a6-270f77f87083">
-      <Execution id="a33855a2-95e9-434b-a87b-2890f9eaa250" />
+      <Execution id="7db2eb81-0d1c-4ed0-be83-13c1baa6d2a4" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="MatchEngine.Tests.Domain.FormationValidationTests" name="MissingGK_InRoleMap_FailsValidation" />
     </UnitTest>
     <UnitTest name="MatchEngine.Tests.RNG.RngDeterminismTests.TwoGenerators_SameSeed_ProduceIdenticalSequence" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="e89800e0-ecfc-de63-1291-3830b3998dc8">
-      <Execution id="c5a88e6d-dcbd-4b19-87ba-3bf957f4f67c" />
+      <Execution id="e5dc7ada-4a85-4e25-96a5-3106bbdcc182" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="MatchEngine.Tests.RNG.RngDeterminismTests" name="TwoGenerators_SameSeed_ProduceIdenticalSequence" />
     </UnitTest>
+    <UnitTest name="DuelsCountersTests.DuelsCountersNonNegativeAndConsistent" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="33294670-ebaf-082d-ca6a-4080f32e0bf9">
+      <Execution id="f3b6f063-b940-46e3-a251-a2f8b6dca22c" />
+      <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DuelsCountersTests" name="DuelsCountersNonNegativeAndConsistent" />
+    </UnitTest>
     <UnitTest name="MatchEngine.Tests.Domain.PresetsSmokeTests.Red433_Valid" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="275df028-9568-0bf4-fa43-ed86234f815a">
-      <Execution id="2ca7b104-6806-4ad1-86da-d4f50ae85f33" />
+      <Execution id="7ec0be81-1d24-43a5-b1da-94bb5fa4b9a6" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="MatchEngine.Tests.Domain.PresetsSmokeTests" name="Red433_Valid" />
     </UnitTest>
     <UnitTest name="MatchEngine.Tests.Domain.PresetsSmokeTests.Blue4141_Valid" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="225fb30b-1f26-55f1-b6a8-37cad42929ef">
-      <Execution id="08e97678-264e-407d-b0ca-b5d862f2dd0d" />
+      <Execution id="c298efbb-77f1-4865-84e0-faf9e1dd43d7" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="MatchEngine.Tests.Domain.PresetsSmokeTests" name="Blue4141_Valid" />
     </UnitTest>
     <UnitTest name="MatchEngine.Tests.RNG.RngStreamsIsolationTests.Streams_IsolatedBetweenNames_AndCachedPerRegistry" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="6bdf13e3-16ea-4b9e-3113-8dd4315638ad">
-      <Execution id="cb6dd499-2c39-4316-b7fe-9f431d0c7543" />
+      <Execution id="5aa3eca2-46ef-4d8c-9163-0138729fc90b" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="MatchEngine.Tests.RNG.RngStreamsIsolationTests" name="Streams_IsolatedBetweenNames_AndCachedPerRegistry" />
     </UnitTest>
     <UnitTest name="MatchEngine.Tests.Domain.PlayerOverallTests.Overall_ForST_UsesRoleWeightsAndIsAccurate" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="d44f3339-dec5-94a1-fa00-13593238b8ea">
-      <Execution id="e1f1c485-c454-4835-abaa-bf538142eaa7" />
+      <Execution id="04a4cd03-4894-4ad8-900b-41e8e605646e" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="MatchEngine.Tests.Domain.PlayerOverallTests" name="Overall_ForST_UsesRoleWeightsAndIsAccurate" />
     </UnitTest>
     <UnitTest name="MatchEngine.Tests.Domain.FormationValidationTests.DuplicateStarterIndex_FailsValidation" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="42162dfd-48e1-7006-1821-db2160ea5a80">
-      <Execution id="30bddc76-b426-4a2c-9edb-7d041e8f1b7f" />
+      <Execution id="46337c28-ce98-43c2-80a8-c2f99ef97649" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="MatchEngine.Tests.Domain.FormationValidationTests" name="DuplicateStarterIndex_FailsValidation" />
     </UnitTest>
     <UnitTest name="MatchEngine.Tests.RNG.Mt19937VectorsTests.ReferenceVectors_Seed5489_First10Match" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="1dd244f0-73e4-5460-4cff-cdc246b19d11">
-      <Execution id="50cd6396-54f2-4859-9e4b-17b4df780d5c" />
+      <Execution id="63645741-7371-4047-9b33-a0a90e4b24e1" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="MatchEngine.Tests.RNG.Mt19937VectorsTests" name="ReferenceVectors_Seed5489_First10Match" />
     </UnitTest>
+    <UnitTest name="GkSavesInvariantsTests.SavesPlusGoalsEqualShotsOnTarget_PerTeam" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="56b35c0a-7cc6-c5b3-d76a-feae276118b6">
+      <Execution id="da850f98-4ffe-4dd4-bf55-bdc0e9a35891" />
+      <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="GkSavesInvariantsTests" name="SavesPlusGoalsEqualShotsOnTarget_PerTeam" />
+    </UnitTest>
     <UnitTest name="EventsMonotonicityTests.MinutesMonotonicAndFinalWhistleExists" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="2f597487-ce89-e96a-8939-6b72bb278edd">
-      <Execution id="aa372a43-69d3-4fad-bdc7-234433b1b2b5" />
+      <Execution id="880ef348-cb85-4d00-8bfd-7b2ba4175273" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="EventsMonotonicityTests" name="MinutesMonotonicAndFinalWhistleExists" />
     </UnitTest>
     <UnitTest name="DeterminismTests.SameSeedSameReport" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="dfb55a16-6fb0-edf8-172a-bb8dccaa8a20">
-      <Execution id="e3fabe1d-8eb0-4409-a479-901f6fc7e3da" />
+      <Execution id="59538b3a-7de6-4204-89a9-818e5e08ad20" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DeterminismTests" name="SameSeedSameReport" />
     </UnitTest>
     <UnitTest name="InvariantsTests.ShotsAndPossessionAndSetPiecesConsistent" storage="d:\programowanie\match-engine\tests\matchengine.tests\bin\debug\net9.0\matchengine.tests.dll" id="ed16d4dc-dfa0-3518-1944-a8befd06b076">
-      <Execution id="d74a0431-8e00-4471-a544-193e5fdcb9e7" />
+      <Execution id="119c3d8b-bebf-4019-b87a-7d47425c2854" />
       <TestMethod codeBase="D:\Programowanie\Match-engine\tests\MatchEngine.Tests\bin\Debug\net9.0\MatchEngine.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="InvariantsTests" name="ShotsAndPossessionAndSetPiecesConsistent" />
     </UnitTest>
   </TestDefinitions>
   <TestEntries>
-    <TestEntry testId="1dd244f0-73e4-5460-4cff-cdc246b19d11" executionId="50cd6396-54f2-4859-9e4b-17b4df780d5c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="42162dfd-48e1-7006-1821-db2160ea5a80" executionId="30bddc76-b426-4a2c-9edb-7d041e8f1b7f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="f98e7ee9-a1ed-7024-c1a6-270f77f87083" executionId="a33855a2-95e9-434b-a87b-2890f9eaa250" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="d44f3339-dec5-94a1-fa00-13593238b8ea" executionId="e1f1c485-c454-4835-abaa-bf538142eaa7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="6dcf93c1-7a34-1679-8aad-2b161e9765f8" executionId="3f299b8b-1f1e-4513-8303-3e4c2e633c58" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="225fb30b-1f26-55f1-b6a8-37cad42929ef" executionId="08e97678-264e-407d-b0ca-b5d862f2dd0d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="6bdf13e3-16ea-4b9e-3113-8dd4315638ad" executionId="cb6dd499-2c39-4316-b7fe-9f431d0c7543" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="275df028-9568-0bf4-fa43-ed86234f815a" executionId="2ca7b104-6806-4ad1-86da-d4f50ae85f33" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="95a81b1f-287b-e888-a0aa-fbc262bcc14a" executionId="e52bf61b-6bc9-4ae8-b57c-d81ca7c85236" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="2f597487-ce89-e96a-8939-6b72bb278edd" executionId="aa372a43-69d3-4fad-bdc7-234433b1b2b5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="b0ab716c-d885-f778-2018-ccc9a67e4299" executionId="f1683c4e-9839-4bab-87a9-9a37e617d688" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="ed16d4dc-dfa0-3518-1944-a8befd06b076" executionId="d74a0431-8e00-4471-a544-193e5fdcb9e7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="dfb55a16-6fb0-edf8-172a-bb8dccaa8a20" executionId="e3fabe1d-8eb0-4409-a479-901f6fc7e3da" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
-    <TestEntry testId="e89800e0-ecfc-de63-1291-3830b3998dc8" executionId="c5a88e6d-dcbd-4b19-87ba-3bf957f4f67c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6bdf13e3-16ea-4b9e-3113-8dd4315638ad" executionId="5aa3eca2-46ef-4d8c-9163-0138729fc90b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f98e7ee9-a1ed-7024-c1a6-270f77f87083" executionId="7db2eb81-0d1c-4ed0-be83-13c1baa6d2a4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="33294670-ebaf-082d-ca6a-4080f32e0bf9" executionId="f3b6f063-b940-46e3-a251-a2f8b6dca22c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1dd244f0-73e4-5460-4cff-cdc246b19d11" executionId="63645741-7371-4047-9b33-a0a90e4b24e1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d44f3339-dec5-94a1-fa00-13593238b8ea" executionId="04a4cd03-4894-4ad8-900b-41e8e605646e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e89800e0-ecfc-de63-1291-3830b3998dc8" executionId="e5dc7ada-4a85-4e25-96a5-3106bbdcc182" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6dcf93c1-7a34-1679-8aad-2b161e9765f8" executionId="cb5f1897-66eb-46b1-9488-afd886e84072" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="56b35c0a-7cc6-c5b3-d76a-feae276118b6" executionId="da850f98-4ffe-4dd4-bf55-bdc0e9a35891" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2f597487-ce89-e96a-8939-6b72bb278edd" executionId="880ef348-cb85-4d00-8bfd-7b2ba4175273" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ed16d4dc-dfa0-3518-1944-a8befd06b076" executionId="119c3d8b-bebf-4019-b87a-7d47425c2854" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b0ab716c-d885-f778-2018-ccc9a67e4299" executionId="ba6992cb-02e8-4b1d-a580-bb142d56a139" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dfb55a16-6fb0-edf8-172a-bb8dccaa8a20" executionId="59538b3a-7de6-4204-89a9-818e5e08ad20" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="42162dfd-48e1-7006-1821-db2160ea5a80" executionId="46337c28-ce98-43c2-80a8-c2f99ef97649" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="275df028-9568-0bf4-fa43-ed86234f815a" executionId="7ec0be81-1d24-43a5-b1da-94bb5fa4b9a6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="95a81b1f-287b-e888-a0aa-fbc262bcc14a" executionId="9e527d9b-eca9-4a73-a95a-38d9b731bc20" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="225fb30b-1f26-55f1-b6a8-37cad42929ef" executionId="c298efbb-77f1-4865-84e0-faf9e1dd43d7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
   </TestEntries>
   <TestLists>
     <TestList name="Wyniki, których nie ma na liście" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
     <TestList name="Wszystkie załadowane wyniki" id="19431567-8539-422a-85d7-44ee4e166bda" />
   </TestLists>
   <ResultSummary outcome="Completed">
-    <Counters total="14" executed="14" passed="14" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Counters total="16" executed="16" passed="16" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
     <Output>
       <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.0)&#xD;
 [xUnit.net 00:00:00.14]   Discovering: MatchEngine.Tests&#xD;
-[xUnit.net 00:00:00.18]   Discovered:  MatchEngine.Tests&#xD;
-[xUnit.net 00:00:00.19]   Starting:    MatchEngine.Tests&#xD;
-[xUnit.net 00:00:00.46]   Finished:    MatchEngine.Tests&#xD;
+[xUnit.net 00:00:00.19]   Discovered:  MatchEngine.Tests&#xD;
+[xUnit.net 00:00:00.20]   Starting:    MatchEngine.Tests&#xD;
+[xUnit.net 00:00:00.54]   Finished:    MatchEngine.Tests&#xD;
 </StdOut>
     </Output>
   </ResultSummary>

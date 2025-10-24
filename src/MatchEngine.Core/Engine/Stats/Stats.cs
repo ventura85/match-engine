@@ -28,5 +28,6 @@ public sealed class Stats
     public int RedsB { get; set; }
     public double XgA { get; set; }
     public double XgB { get; set; }
+    public int SavesA { get; set; }
+    public int SavesB { get; set; }
 }
-

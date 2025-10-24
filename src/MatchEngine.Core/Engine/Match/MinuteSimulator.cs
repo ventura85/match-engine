@@ -14,6 +14,8 @@ public static class MinuteSimulator
         var rngShot = s.Rng.Get("shots");
         var rngSp = s.Rng.Get("setpieces");
         var rngCards = s.Rng.Get("cards");
+        var rngDuels = s.Rng.Get("duels");
+        var rngGk = s.Rng.Get("gk_saves");
 
         // 1) Possession tilt from tactics (simple MVP)
         double tilt = 0.5;
@@ -30,6 +32,28 @@ public static class MinuteSimulator
         bool finalThird = rngPhase.NextDouble() < 0.55;
         if (!finalThird) return;
         full.Add(new Event(s.Minute, EventType.FinalThird, teamName));
+
+        // 2.5) Duel attempt before chance creation in final third
+        {
+            // TODO: fetch real attributes from team players (AM/W/ST vs CB/DM). Placeholder balanced values for MVP.
+            double attStr = 70, attBal = 70, attWr = 70, attAgg = 70;
+            double defStr = 70, defBal = 70, defWr = 70, defAgg = 70;
+            double fatigue = 1.0; // placeholder, integrate with Energy later
+            double winProb = Duels.DuelModel.AttackerWinProb(attStr, attBal, attWr, attAgg, defStr, defBal, defWr, defAgg, fatigue);
+            bool attackerIsA = aHasBall;
+            if (attackerIsA) st.DuelsTotalA++; else st.DuelsTotalB++;
+            bool win = rngDuels.NextDouble() < winProb;
+            if (win)
+            {
+                full.Add(new Event(s.Minute, EventType.DuelWon, attackerIsA ? s.A.Name : s.B.Name));
+                if (attackerIsA) st.DuelsWonA++; else st.DuelsWonB++;
+            }
+            else
+            {
+                full.Add(new Event(s.Minute, EventType.DuelLost, attackerIsA ? s.A.Name : s.B.Name));
+                return; // minute ends without shot
+            }
+        }
 
         // 3) Sometimes set-piece instead of open play
         if (rngSp.NextDouble() < 0.07)
@@ -69,6 +93,7 @@ public static class MinuteSimulator
     {
         if (aHasBall) st.ShotsA++; else st.ShotsB++;
         var atkTeam = aHasBall ? s.A.Name : s.B.Name;
+        var defTeam = aHasBall ? s.B.Name : s.A.Name;
         full.Add(new Event(s.Minute, EventType.Shot, atkTeam));
         // on-target chance
         var onTarget = s.Rng.Get("shots").NextDouble() < (setPiece ? 0.55 : 0.48);
@@ -77,10 +102,23 @@ public static class MinuteSimulator
             if (aHasBall) st.ShotsOnTargetA++; else st.ShotsOnTargetB++;
             full.Add(new Event(s.Minute, EventType.ShotOnTarget, atkTeam));
             // xG & goal
-            var xg = XgModel.ShotXg(distanceM: 12 + s.Rng.Get("shots").Next(0, 13), angleDeg: 20 + s.Rng.Get("shots").Next(0, 61), setPiece);
+            var distance = 12 + s.Rng.Get("shots").Next(0, 13);
+            var angle = 20 + s.Rng.Get("shots").Next(0, 61);
+            var xg = XgModel.ShotXg(distanceM: distance, angleDeg: angle, setPiece);
             if (aHasBall) st.XgA += xg; else st.XgB += xg;
-            var goal = s.Rng.Get("shots").NextDouble() < Math.Clamp(xg * 0.9, 0.05, 0.7);
-            if (goal)
+            // maintain shots stream parity (historically consumed a NextDouble here)
+            _ = s.Rng.Get("shots").NextDouble();
+            // GK save model
+            double gkAg = 70, gkPos = 70, gkComp = 70; // placeholder; to be sourced from real GK later
+            var saveProb = Gk.GkModel.SaveProbability(xg, gkAg, gkPos, gkComp, distance, angle);
+            bool isSaved = s.Rng.Get("gk_saves").NextDouble() < saveProb;
+            if (isSaved)
+            {
+                full.Add(new Event(s.Minute, EventType.SaveMade, defTeam));
+                if (defTeam == s.A.Name) st.SavesA++; else st.SavesB++;
+                return;
+            }
+            else
             {
                 if (aHasBall) st.GoalsA++; else st.GoalsB++;
                 full.Add(new Event(s.Minute, EventType.Goal, atkTeam));

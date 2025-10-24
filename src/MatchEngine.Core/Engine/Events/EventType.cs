@@ -14,7 +14,9 @@ public enum EventType
     FoulCommitted,
     YellowCard,
     RedCard,
+    DuelWon,
+    DuelLost,
+    SaveMade,
     HalfTime,
     FinalWhistle
 }
-
