@@ -32,6 +32,34 @@ logs/
 
 # Ignore entire legacy Python code folder(s)
 Python/
+
+# Additional general ignores
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+frontend/npm-debug.log*
+
+# .NET test artifacts
+**/TestResults/
+*.trx
+
+# JS/Frontend caches
+node_modules/
+frontend/.env.local
+.env.local
+coverage/
+frontend/.vite/
+
+# Archives and temporary
+*.zip
+tmp/
+temp/
+*.tmp
 python/
 
 # React frontend
