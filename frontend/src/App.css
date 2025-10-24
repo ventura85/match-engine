@@ -32,3 +32,14 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-
 .badge { display: inline-block; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--muted); }
 .error { color: #b00020; margin: 8px 0; }
 
+/* Segmented control */
+.seg { display:inline-flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-left:8px; }
+.seg button { border:0; background:transparent; padding:8px 12px; cursor:pointer; }
+.seg button.on { background:#111; color:#fff; }
+
+/* Delikatniejsze karty i marginesy */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+.score { font-size: 30px; }
+
+/* Event badge wyraźniejszy */
+.badge { background:#f7f7f7; border-color:#ddd; }

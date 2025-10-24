@@ -7,7 +7,7 @@ const ICON = {
   ShotOnTarget: '🎯',
   Shot: '💥',
   CornerAwarded: '⛳',
-  FreekickAwarded: '🟨',
+  FreekickAwarded: '🧱',
   PenaltyAwarded: '⚠️',
   YellowCard: '🟨',
   RedCard: '🟥',
@@ -16,6 +16,24 @@ const ICON = {
   DuelLost: '🔴',
   FinalWhistle: '⏱️',
 };
+const LABELS = {
+  Goal: 'Gol',
+  ShotOnTarget: 'Strzał celny',
+  Shot: 'Strzał',
+  CornerAwarded: 'Rzut rożny',
+  FreekickAwarded: 'Rzut wolny',
+  PenaltyAwarded: 'Rzut karny',
+  YellowCard: 'Żółta kartka',
+  RedCard: 'Czerwona kartka',
+  SaveMade: 'Interwencja GK',
+  DuelWon: 'Wygrany pojedynek',
+  DuelLost: 'Przegrany pojedynek',
+  FinalWhistle: 'Koniec meczu',
+};
+
+const nf = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 1 });
+const nf2 = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 2 });
+const pct = v => `${nf.format(v)}%`;
 
 export default function App() {
   const [teams, setTeams] = useState([]);
@@ -25,30 +43,37 @@ export default function App() {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
+  const [mode, setMode] = useState('key'); // 'key' | 'full'
 
   useEffect(() => {
     fetchTeams().then(setTeams).catch(e => setErr(String(e)));
   }, []);
 
-  const possA = report ? Number(report.stats.possessionA?.toFixed(1)) : 0;
-  const possB = report ? Number(report.stats.possessionB?.toFixed(1)) : 0;
+  const possA = report ? Number(nf.format(report.stats.possessionA)) : 0;
+  const possB = report ? Number(nf.format(report.stats.possessionB)) : 0;
+
+  const evs = report
+    ? (mode === 'key'
+        ? (report.events?.length ? report.events : report.eventsFull)
+        : report.eventsFull)
+    : [];
 
   const rows = useMemo(() => {
     if (!report) return [];
     const s = report.stats;
     return [
-      ['Posiadanie %', `${possA}%`, `${possB}%`],
+      ['Posiadanie %', pct(report.stats.possessionA), pct(report.stats.possessionB)],
       ['Strzały (celne)', `${s.shotsA} (${s.shotsOnTargetA})`, `${s.shotsB} (${s.shotsOnTargetB})`],
-      ['xG', s.xgA?.toFixed(2), s.xgB?.toFixed(2)],
+      ['xG', nf2.format(s.xgA ?? 0), nf2.format(s.xgB ?? 0)],
       ['Rogi', s.cornersA, s.cornersB],
       ['Wolne', s.freekicksA, s.freekicksB],
       ['Karne', s.penaltiesA, s.penaltiesB],
-      ['Faule', s.foulsA, s.foulsB],
-      ['Żółte', s.yellowsA, s.yellowsB],
-      ['Czerwone', s.redsA, s.redsB],
+      ['Faule', s.foulsA ?? 0, s.foulsB ?? 0],
+      ['Żółte', s.yellowsA ?? 0, s.yellowsB ?? 0],
+      ['Czerwone', s.redsA ?? 0, s.redsB ?? 0],
       ['Pojedynki (wygrane/łącznie)', `${s.duelsWonA ?? 0}/${s.duelsTotalA ?? 0}`, `${s.duelsWonB ?? 0}/${s.duelsTotalB ?? 0}`],
     ];
-  }, [report, possA, possB]);
+  }, [report]);
 
   async function run() {
     setLoading(true); setErr(null);
@@ -76,6 +101,10 @@ export default function App() {
           <input type="number" value={seed} onChange={e=>setSeed(Number(e.target.value))} style={{width:90}}/>
         </label>
         <button onClick={run} disabled={loading}>Start</button>
+        <div className="seg">
+          <button className={mode==='key'?'on':''} onClick={()=>setMode('key')}>Skrót</button>
+          <button className={mode==='full'?'on':''} onClick={()=>setMode('full')}>Pełna</button>
+        </div>
       </div>
 
       {err && <div className="error">Błąd: {err}</div>}
@@ -118,13 +147,13 @@ export default function App() {
           <div className="card" style={{gridColumn: '1 / -1'}}>
             <h3>Chronologia (skrót)</h3>
             <div className="events">
-              {report.events.map((e, i) => (
+              {evs.map((e, i) => (
                 <div key={i} className="event">
                   <div className="min">{e.minute}'</div>
                   <div>
                     <span className="badge" style={{marginRight:8}}>
-                      {ICON[e.type] ?? '•'} {e.type}
-                    </span>
+                      {ICON[e.type] ?? '•'} {LABELS[e.type] ?? e.type}
+                    </span>{' '}
                     <strong>{e.team}</strong>
                     {e.description ? ` — ${e.description}` : ''}
                   </div>
