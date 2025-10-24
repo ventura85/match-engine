@@ -12,19 +12,20 @@ TestResults/
 *.user
 *.suo
 
+# --- Node (root) ---
+node_modules/
+package-lock.json
+
 # --- Node/React (frontend) ---
 frontend/node_modules/
 frontend/dist/
 frontend/.env*
-# jeśli masz inne paczki webowe, dodaj analogicznie: */node_modules/
 
-# --- Python (legacy narzędzia) ---
+# --- Python ---
 .venv/
 __pycache__/
 .pytest_cache/
 *.pyc
-Python/
-python/
 
 # --- Artefakty / tymczasowe ---
 dist/
@@ -33,7 +34,6 @@ out/
 tmp/
 temp/
 *.tmp
-*.zip
 *.coverage
 coverage*.xml
 *.log
@@ -41,14 +41,15 @@ logs/
 npm-debug.log*
 yarn-*.log
 
-# --- Dane generowane (tylko w katalogach out/tmp) ---
+# --- Dane generowane tylko w out/tmp ---
 out/**/*.json
 out/**/*.ndjson
 tmp/**/*.json
 tmp/**/*.ndjson
 
-# --- WAŻNE: Zostaw JSONy w kodzie źródłowym ---
+# --- Zachowaj JSON-y w kodzie i configi ---
 !src/**/*.json
 !frontend/**/*.json
 !assets/**/*.json
 !**/appsettings*.json
+
