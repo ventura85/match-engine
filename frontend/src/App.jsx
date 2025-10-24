@@ -226,14 +226,14 @@ export default function App() {
             <h3>Chronologia (skr{`\u00F3`}t)</h3>
             <div className="events">
               {evs.map((e, i) => (
-                <div key={`${e.minute}-${e.type}-${e.team}-${i}`} className="event">
+                <div key={`${e.minute}-${e.type}-${e.team}-${i}`} className="event" title={e.description || undefined}>
                   <div className="min">{e.minute}'</div>
                   <div>
                     <span className="badge" style={{marginRight:8}}>
                       {ICON[e.type] ?? '*'} {LABELS[e.type] ?? e.type}
                     </span>{' '}
                     <strong>{e.team}</strong>
-                    {e.description ? ` \u2014 ${e.description}` : ''}
+                    {e.description ? <span className="desc"> {'\u2014'} {e.description}</span> : ''}
                   </div>
                 </div>
               ))}

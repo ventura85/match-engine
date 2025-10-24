@@ -4,6 +4,7 @@ using MatchEngine.Core.Engine.Events;
 using MatchEngine.Core.Engine.RNG;
 using EngineStats = MatchEngine.Core.Engine.Stats.Stats;
 using MatchEngine.Core.Reporting;
+using MatchEngine.Core.Engine.Commentary;
 
 namespace MatchEngine.Core.Engine.Match;
 
@@ -36,6 +37,9 @@ public sealed class MatchEngine
         st.PossessionA = 100.0 * state.PossA / totalPoss;
         st.PossessionB = 100.0 * state.PossB / totalPoss;
 
+        // commentary pass: fill descriptions deterministically using "commentary" stream
+        ApplyCommentary(full, key);
+
         var report = new MatchReport
         {
             TeamA = _a.Name,
@@ -48,5 +52,74 @@ public sealed class MatchEngine
         report.Events.AddRange(key);
         report.EventsFull.AddRange(full);
         return report;
+    }
+
+    private void ApplyCommentary(List<Event> full, List<Event> key)
+    {
+        var repo = TryCreateDefaultRepo();
+        if (repo == null) return;
+        var composer = new CommentaryComposer(_rng.Get("commentary"), repo, locale: "pl", tone: "fun", cooldownSize: 6);
+
+        // map and replace events with descriptions
+        for (int i = 0; i < full.Count; i++)
+        {
+            var e = full[i];
+            if (IsKeyForCommentary(e.Type))
+            {
+                var name = e.Type.ToString();
+                var team = e.Team;
+                var opp = team == _a.Name ? _b.Name : team == _b.Name ? _a.Name : string.Empty;
+                var line = composer.Compose(name, e.Minute, team, opp);
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    full[i] = new Event(e.Minute, e.Type, e.Team, line);
+                }
+            }
+        }
+
+        // re-emit for key list as well
+        for (int i = 0; i < key.Count; i++)
+        {
+            var e = key[i];
+            if (IsKeyForCommentary(e.Type))
+            {
+                var name = e.Type.ToString();
+                var team = e.Team;
+                var opp = team == _a.Name ? _b.Name : team == _b.Name ? _a.Name : string.Empty;
+                var line = composer.Compose(name, e.Minute, team, opp);
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    key[i] = new Event(e.Minute, e.Type, e.Team, line);
+                }
+            }
+        }
+    }
+
+    private static bool IsKeyForCommentary(EventType t)
+        => t == EventType.Goal
+        || t == EventType.SaveMade
+        || t == EventType.ShotOnTarget
+        || t == EventType.FreekickAwarded
+        || t == EventType.CornerAwarded
+        || t == EventType.FoulCommitted
+        || t == EventType.YellowCard
+        || t == EventType.RedCard
+        || t == EventType.PenaltyAwarded
+        || t == EventType.FinalWhistle
+        || t == EventType.Kickoff;
+
+    // no mapping needed; using enum string names directly
+
+    private static ICommentRepository? TryCreateDefaultRepo()
+    {
+        try
+        {
+            // Default location relative to app root or working directory
+            return new JsonCommentRepository("assets/comments");
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

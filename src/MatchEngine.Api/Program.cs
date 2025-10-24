@@ -2,6 +2,7 @@ using MatchEngine.Core.Domain.Teams.Presets;
 using EngineMatch = MatchEngine.Core.Engine.Match.MatchEngine;
 using MatchEngine.Api.Dtos;
 using Microsoft.Extensions.Configuration;
+using MatchEngine.Core.Engine.Commentary;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,9 @@ builder.Services.AddOpenApi();
 // Repository registration based on configuration
 var teamsSource = builder.Configuration["Data:Teams:Source"] ?? "json";
 var teamsPath = builder.Configuration["Data:Teams:Path"] ?? "assets/teams";
+var commentsPath = builder.Configuration["Data:Comments:Path"] ?? "assets/comments";
+var commentsLocale = builder.Configuration["Data:Comments:Locale"] ?? "pl";
+var commentsTone = builder.Configuration["Data:Comments:Tone"] ?? "fun";
 
 if (string.Equals(teamsSource, "json", StringComparison.OrdinalIgnoreCase))
 {
@@ -42,6 +46,14 @@ else
     // Default to empty JSON repo if unknown source
     builder.Services.AddSingleton<ITeamRepository>(_ => new JsonTeamRepository(teamsPath));
 }
+
+// Commentary repository + composer factory (singleton)
+builder.Services.AddSingleton<ICommentRepository>(_ => new JsonCommentRepository(commentsPath));
+builder.Services.AddSingleton<CommentaryComposerFactory>(sp =>
+{
+    var repo = sp.GetRequiredService<ICommentRepository>();
+    return new CommentaryComposerFactory(repo, commentsLocale, commentsTone, cooldown: 6);
+});
 
 var app = builder.Build();
 

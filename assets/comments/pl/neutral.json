@@ -1,0 +1,43 @@
+{
+  "Kickoff": [
+    "Zaczynamy!",
+    "Pierwszy gwizdek!"
+  ],
+  "Goal": [
+    "{minute}' — gol dla {team}.",
+    "{team} na prowadzeniu."
+  ],
+  "SaveMade": [
+    "{team} broni strzal.",
+    "Bramkarz {team} na posterunku."
+  ],
+  "FoulCommitted": [
+    "Faul {team}. Sedzia uspokaja gre.",
+    "Ostre wejscie — przewinienie {team}."
+  ],
+  "FreekickAwarded": [
+    "Rzut wolny dla {team}.",
+    "Szansa z wolnego dla {team}."
+  ],
+  "CornerAwarded": [
+    "Rzut rozny dla {team}.",
+    "Kolejny korner dla {team}."
+  ],
+  "ShotOnTarget": [
+    "{team} oddaje celny strzal.",
+    "Pilka w swiatlo bramki."
+  ],
+  "YellowCard": [
+    "Zolta kartka.",
+    "Ostrzezenie od sedziego."
+  ],
+  "RedCard": [
+    "Czerwona kartka.",
+    "Druzyna gra w oslabieniu."
+  ],
+  "FinalWhistle": [
+    "Koniec meczu.",
+    "Sedzia konczy spotkanie."
+  ]
+}
+

@@ -1,0 +1,84 @@
+{
+  "Kickoff": [
+    "Krotka klepka, cierpliwe budowanie.",
+    "Dwa kontakty, tempo rosnie.",
+    "Trojkat podan w bocznym sektorze.",
+    "Gra na malej przestrzeni — szukaja trojkata.",
+    "Odwrocenie strony i wejscie w polprzestrzen.",
+    "Wysoki pressing, wymuszone zagranie do tylu.",
+    "Zmienna wysokosc ataku, wachlowanie pilka.",
+    "Rozpoczynaja spokojnie od obroncow.",
+    "Krotko z autu i znowu rytm.",
+    "Szybka klepka, przeciwnik goni cien.",
+    "Rytm rosnie, przeciwnik tylko przesuwa blok.",
+    "Zagranie na sciane i ruch bez pilki.",
+    "Nawroty i wymiana na jeden kontakt.",
+    "Gra na wolne pole — jest przestrzen!",
+    "Wejscie w polprzestrzen — pachnie okazja.",
+    "Rozciagaja obrone szeroko.",
+    "Dosrodkowanie przygotowywane z prawej flanki.",
+    "Zaciskaja srodek, szukaja prostopadlego.",
+    "Klepa przy linii — sprytne granie.",
+    "Cierpliwie — kontrola rytmu."
+  ],
+  "Goal": [
+    "Huknal bez przyjecia — nie do obrony!",
+    "Precyzyjnie przy slupku — stadiony swiata!",
+    "Przytomne wykonczenie z bliska!",
+    "Mierzony strzal — bramkarz bez szans!",
+    "Strzal z pierwszej pilki — idealne dogranie!",
+    "Piekna akcja i chlodne wykonczenie!",
+    "Alez radosc! Pilka jak po sznurku.",
+    "Gol z zimna krwia — bez nerwow."
+  ],
+  "SaveMade": [
+    "Golkiper z klasa — broni pewnie!",
+    "Kapitalna parada! Strzal zatrzymany.",
+    "Refleks kota — piastkuje poza pole.",
+    "Swietna interwencja — klosliwe uderzenie zatrzymane.",
+    "Ratuje z linii! Fenomenalny refleks.",
+    "Zamraza sytuacje — lapie bez problemu.",
+    "Instynktownie noga — niewiarygodna obrona!",
+    "Wyciaga to z okienka — cudowna parada.",
+    "Na raty, ale skutecznie!",
+    "Parada jak z okladki — wow!"
+  ],
+  "ShotOnTarget": [
+    "{team} uderza celnie!",
+    "Plasko po ziemi — golkiper czujny!",
+    "Pilka zmierzala w okienko — wyłapana."
+  ],
+  "FreekickAwarded": [
+    "Rzut wolny — dorzuca w szesnastke?",
+    "Staly fragment — ustawiajá murek.",
+    "Bedzie wrzutka czy strzal?"
+  ],
+  "CornerAwarded": [
+    "Strzal zablokowany — bedzie rog!",
+    "Ofiarna interwencja — rzut rozny.",
+    "Blok jak mur — korner.",
+    "Bramkarz paruje strzal — rog!",
+    "Swietna parada na rog!",
+    "Wyciagnieta z okienka — bedzie rzut rozny!"
+  ],
+  "FoulCommitted": [
+    "{team} dociska pressingiem, zamyka rywala gleboko.",
+    "Kolejne fale ataku {team}. Trybuny wstaja — to moze byc moment przelomowy.",
+    "Mowa ciala mowi wszystko — {team} idzie po swoje, rywal gasi pozary."
+  ],
+  "YellowCard": [
+    "Zolta kartka — ostro, ale bez przesady.",
+    "Do notesu sedziego — uwazaj!",
+    "Twardo zagrane — sedzia nie mial wyjscia."
+  ],
+  "RedCard": [
+    "Czerwona kartka! {team} wylatuje!",
+    "Brutalny faul — bez dyskusji.",
+    "Koniec meczu dla winowajcy."
+  ],
+  "FinalWhistle": [
+    "Koncowka i robi sie gesto — wszyscy licza sekundy.",
+    "Ostatnie chwile i adrenalina na maksa.",
+    "{minute}' — nerwy jak struny. {team} probuje jeszcze jednego wejscia."
+  ]
+}

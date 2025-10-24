@@ -32,6 +32,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-
 .event:last-child { border-bottom: none; }
 .event .min { color: var(--muted); font-weight: 600; }
 .badge { display: inline-block; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--muted); }
+.event .desc { color: var(--muted); }
 .error { color: #b00020; margin: 8px 0; }
 
 /* Segmented control */
