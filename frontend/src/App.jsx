@@ -1,29 +1,29 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { fetchTeams, simulate } from './lib/api';
 import './App.css';
 
 const ICON = {
-  Goal: '⚽',
-  ShotOnTarget: '🎯',
-  Shot: '💥',
-  CornerAwarded: '⛳',
-  FreekickAwarded: '🧱',
-  PenaltyAwarded: '⚠️',
-  YellowCard: '🟨',
-  RedCard: '🟥',
-  SaveMade: '🧤',
-  DuelWon: '🟢',
-  DuelLost: '🔴',
-  FinalWhistle: '⏱️',
+  Goal: 'âš˝',
+  ShotOnTarget: 'đźŽŻ',
+  Shot: 'đź’Ą',
+  CornerAwarded: 'â›ł',
+  FreekickAwarded: 'đź§±',
+  PenaltyAwarded: 'âš ď¸Ź',
+  YellowCard: 'đźź¨',
+  RedCard: 'đźźĄ',
+  SaveMade: 'đź§¤',
+  DuelWon: 'đźź˘',
+  DuelLost: 'đź”´',
+  FinalWhistle: 'âŹ±ď¸Ź',
 };
 const LABELS = {
   Goal: 'Gol',
-  ShotOnTarget: 'Strzał celny',
-  Shot: 'Strzał',
-  CornerAwarded: 'Rzut rożny',
+  ShotOnTarget: 'StrzaĹ‚ celny',
+  Shot: 'StrzaĹ‚',
+  CornerAwarded: 'Rzut roĹĽny',
   FreekickAwarded: 'Rzut wolny',
   PenaltyAwarded: 'Rzut karny',
-  YellowCard: 'Żółta kartka',
+  YellowCard: 'Ĺ»ĂłĹ‚ta kartka',
   RedCard: 'Czerwona kartka',
   SaveMade: 'Interwencja GK',
   DuelWon: 'Wygrany pojedynek',
@@ -34,6 +34,7 @@ const LABELS = {
 const nf = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 1 });
 const nf2 = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 2 });
 const pct = v => `${nf.format(v)}%`;
+const clamp01 = v => Math.max(0, Math.min(100, v));
 
 export default function App() {
   const [teams, setTeams] = useState([]);
@@ -49,8 +50,8 @@ export default function App() {
     fetchTeams().then(setTeams).catch(e => setErr(String(e)));
   }, []);
 
-  const possA = report ? Number(nf.format(report.stats.possessionA)) : 0;
-  const possB = report ? Number(nf.format(report.stats.possessionB)) : 0;
+  const possA = report ? (report.stats?.possessionA ?? 0) : 0;
+  const possB = report ? (report.stats?.possessionB ?? 0) : 0;
 
   const evs = report
     ? (mode === 'key'
@@ -63,15 +64,15 @@ export default function App() {
     const s = report.stats;
     return [
       ['Posiadanie %', pct(report.stats.possessionA), pct(report.stats.possessionB)],
-      ['Strzały (celne)', `${s.shotsA} (${s.shotsOnTargetA})`, `${s.shotsB} (${s.shotsOnTargetB})`],
+      ['StrzaĹ‚y (celne)', `${s.shotsA} (${s.shotsOnTargetA})`, `${s.shotsB} (${s.shotsOnTargetB})`],
       ['xG', nf2.format(s.xgA ?? 0), nf2.format(s.xgB ?? 0)],
       ['Rogi', s.cornersA, s.cornersB],
       ['Wolne', s.freekicksA, s.freekicksB],
       ['Karne', s.penaltiesA, s.penaltiesB],
       ['Faule', s.foulsA ?? 0, s.foulsB ?? 0],
-      ['Żółte', s.yellowsA ?? 0, s.yellowsB ?? 0],
+      ['Ĺ»ĂłĹ‚te', s.yellowsA ?? 0, s.yellowsB ?? 0],
       ['Czerwone', s.redsA ?? 0, s.redsB ?? 0],
-      ['Pojedynki (wygrane/łącznie)', `${s.duelsWonA ?? 0}/${s.duelsTotalA ?? 0}`, `${s.duelsWonB ?? 0}/${s.duelsTotalB ?? 0}`],
+      ['Pojedynki (wygrane/Ĺ‚Ä…cznie)', `${s.duelsWonA ?? 0}/${s.duelsTotalA ?? 0}`, `${s.duelsWonB ?? 0}/${s.duelsTotalB ?? 0}`],
     ];
   }, [report]);
 
@@ -84,7 +85,7 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1>⚽ Match Engine – MVP</h1>
+      <h1>âš˝ Match Engine â€“ MVP</h1>
 
       <div className="toolbar">
         <label>Team A:{' '}
@@ -102,30 +103,30 @@ export default function App() {
         </label>
         <button onClick={run} disabled={loading}>Start</button>
         <div className="seg">
-          <button className={mode==='key'?'on':''} onClick={()=>setMode('key')}>Skrót</button>
-          <button className={mode==='full'?'on':''} onClick={()=>setMode('full')}>Pełna</button>
+          <button className={mode==='key'?'on':''} onClick={()=>setMode('key')}>SkrĂłt</button>
+          <button className={mode==='full'?'on':''} onClick={()=>setMode('full')}>PeĹ‚na</button>
         </div>
       </div>
 
-      {err && <div className="error">Błąd: {err}</div>}
-      {loading && <div>Symulacja…</div>}
+      {err && <div className="error">BĹ‚Ä…d: {err}</div>}
+      {loading && <div>Symulacjaâ€¦</div>}
 
       {report && (
         <div className="grid">
           <div className="card">
             <h3>Wynik</h3>
             <div className="score">
-              {report.teamA} {report.scoreA} – {report.scoreB} {report.teamB}
+              {report.teamA} {report.scoreA} â€“ {report.scoreB} {report.teamB}
             </div>
             <div className="sub">schema v{report.schemaVersion}</div>
             <div style={{marginTop:12}}>
               <div className="poss-bar" title={`Posiadanie: ${possA}% / ${possB}%`}>
-                <span className="poss-a" style={{width: `${possA}%`}} />
-                <span className="poss-b" style={{width: `${possB}%`}} />
+                <span className="poss-a" style={{width: `${clamp01(possA)}%`}} />
+                <span className="poss-b" style={{width: `${clamp01(possB)}%`}} />
               </div>
               <div className="sub" style={{display:'flex', justifyContent:'space-between', marginTop:6}}>
-                <span>{report.teamA} {possA}%</span>
-                <span>{report.teamB} {possB}%</span>
+                <span>{report.teamA} {pct(report.stats?.possessionA ?? 0)}</span>
+                <span>{report.teamB} {pct(report.stats?.possessionB ?? 0)}</span>
               </div>
             </div>
           </div>
@@ -145,17 +146,17 @@ export default function App() {
           </div>
 
           <div className="card" style={{gridColumn: '1 / -1'}}>
-            <h3>Chronologia (skrót)</h3>
+            <h3>Chronologia (skrĂłt)</h3>
             <div className="events">
               {evs.map((e, i) => (
                 <div key={i} className="event">
                   <div className="min">{e.minute}'</div>
                   <div>
                     <span className="badge" style={{marginRight:8}}>
-                      {ICON[e.type] ?? '•'} {LABELS[e.type] ?? e.type}
+                      {ICON[e.type] ?? 'â€˘'} {LABELS[e.type] ?? e.type}
                     </span>{' '}
                     <strong>{e.team}</strong>
-                    {e.description ? ` — ${e.description}` : ''}
+                    {e.description ? ` â€” ${e.description}` : ''}
                   </div>
                 </div>
               ))}
