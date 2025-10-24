@@ -1,70 +1,54 @@
+# --- OS / IDE ---
+.DS_Store
+Thumbs.db
+.vs/
+.vscode/
+.idea/
+
+# --- .NET ---
+bin/
+obj/
+TestResults/
+*.user
+*.suo
+
+# --- Node/React (frontend) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.env*
+# jeśli masz inne paczki webowe, dodaj analogicznie: */node_modules/
+
+# --- Python (legacy narzędzia) ---
 .venv/
 __pycache__/
 .pytest_cache/
 *.pyc
+Python/
+python/
+
+# --- Artefakty / tymczasowe ---
 dist/
 build/
-*.coverage
-coverage.xml
 out/
-*.ndjson
-*.json
-
-# Build artifacts
-bin/
-obj/
-
-# IDE
-.vscode/
-.vs/
-.idea/
-
-# Logs & output
-out/
-logs/
-
-# User-specific
-*.user
-*.suo
-
-# Config overrides
-**/appsettings.Local.json
-
-# Ignore entire legacy Python code folder(s)
-Python/
-
-# Additional general ignores
-# OS files
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Logs
-*.log
-npm-debug.log*
-frontend/npm-debug.log*
-
-# .NET test artifacts
-**/TestResults/
-*.trx
-
-# JS/Frontend caches
-node_modules/
-frontend/.env.local
-.env.local
-coverage/
-frontend/.vite/
-
-# Archives and temporary
-*.zip
 tmp/
 temp/
 *.tmp
-python/
+*.zip
+*.coverage
+coverage*.xml
+*.log
+logs/
+npm-debug.log*
+yarn-*.log
 
-# React frontend
-frontend/node_modules
-frontend/dist
+# --- Dane generowane (tylko w katalogach out/tmp) ---
+out/**/*.json
+out/**/*.ndjson
+tmp/**/*.json
+tmp/**/*.ndjson
 
-# Stary kod w Pythonie
-Python/
+# --- WAŻNE: Zostaw JSONy w kodzie źródłowym ---
+!src/**/*.json
+!frontend/**/*.json
+!assets/**/*.json
+!**/appsettings*.json
