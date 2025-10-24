@@ -33,3 +33,10 @@ logs/
 # Ignore entire legacy Python code folder(s)
 Python/
 python/
+
+# React frontend
+frontend/node_modules
+frontend/dist
+
+# Stary kod w Pythonie
+Python/

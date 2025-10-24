@@ -4,11 +4,21 @@ using MatchEngine.Api.Dtos;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// CORS for frontend
+builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
+    p.WithOrigins("http://localhost:5173")
+     .AllowAnyHeader()
+     .AllowAnyMethod()
+));
+
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// Enable CORS
+app.UseCors("frontend");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
