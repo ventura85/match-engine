@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { fetchTeams, simulate } from './lib/api';
 import './App.css';
 
@@ -137,4 +137,3 @@ export default function App() {
     </div>
   );
 }
-
